@@ -69,7 +69,16 @@
       <!-- 2) Input container -->
       <div class="card answerCard">
         <div class="answerInner">
-          <input id="answer" type="text" placeholder="Type romaji…" autocomplete="off" spellcheck="false" />
+          <input
+  type="text"
+  id="answer"
+  placeholder="Type romaji"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  spellcheck="false"
+  inputmode="latin"
+>
           <div class="btns">
             <button class="primary" id="checkBtn">Check</button>
             <button class="ghost" id="revealBtn">Reveal</button>
@@ -113,7 +122,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.2</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.3</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>

@@ -88,14 +88,19 @@ body{
   margin-bottom:12px;
 }
 
-/* Simple text title (replaces logo) */
+/* Brand logo */
 .brand{
-  font-size: 20px;
-  font-weight: 750;
-  letter-spacing: .3px;
-  color: var(--text);
-  user-select: none;
-  line-height: 1;
+  display:inline-flex;
+  align-items:center;
+  user-select:none;
+  line-height:1;
+  color: var(--text); /* ensures SVG currentColor matches theme */
+}
+
+.brandLogo{
+  height: 28px;
+  width: auto;
+  display:block;
 }
 
 button{
@@ -369,7 +374,7 @@ input[type="text"]:focus{
   .statValue{font-size:24px}
   .pill{font-size:11.5px}
   input[type="text"]{font-size:18px}
-  .brand{font-size:19px}
+  .brandLogo{height:26px}
 }
 
 /* Drawer */

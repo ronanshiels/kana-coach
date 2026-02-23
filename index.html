@@ -7,6 +7,8 @@
 
   <!-- Icons -->
   <link rel="icon" type="image/svg+xml" href="assets/icons/jp-flag.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/jp-flag-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/jp-flag-180.png">
 
   <meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)">
   <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
@@ -20,8 +22,30 @@
 <body>
   <div class="wrap">
     <div class="topbar">
-      <!-- Simple title -->
-      <div class="brand" aria-label="Kana Coach">Kana Coach</div>
+      <!-- Logo -->
+      <div class="brand" aria-label="Kana Coach">
+        <svg class="brandLogo" viewBox="0 0 260 40" role="img" aria-label="Kana Coach">
+          <text x="0" y="28"
+                font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                font-size="28"
+                font-weight="850"
+                letter-spacing="0.2"
+                fill="currentColor">Kana</text>
+
+          <text x="92" y="29"
+                font-family="Hiragino Mincho ProN, Yu Mincho, Noto Serif JP, ui-serif, Georgia, serif"
+                font-size="28"
+                font-weight="700"
+                fill="var(--accent)">あ</text>
+
+          <text x="124" y="28"
+                font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                font-size="28"
+                font-weight="500"
+                letter-spacing="0.4"
+                fill="currentColor">Coach</text>
+        </svg>
+      </div>
 
       <div style="display:flex;gap:10px;align-items:center">
         <button class="icon" id="helpBtn" aria-label="Help"><span class="iconGlyph">?</span></button>
@@ -62,34 +86,39 @@
           </div>
         </div>
       </div>
+
     </div>
 
     <div class="bottom">
       <div class="statCard">
         <p class="statLabel">Streak</p>
         <p class="statValue" id="streakValue">0</p>
-        <p class="statSub" id="modeTiny">Mode: —</p>
+        <p class="statSub" id="modeTiny">Mode: Normal</p>
       </div>
-
       <div class="statCard">
         <p class="statLabel">Accuracy</p>
-        <p class="statValue"><span id="accValue">0</span><span class="statUnit">%</span></p>
-        <p class="statSub"><span id="correctValue">0</span> correct • <span id="totalValue">0</span> total</p>
+        <p class="statValue" id="accValue">—</p>
+        <p class="statSub" id="seenTiny">0 attempts</p>
       </div>
-
       <div class="statCard">
         <p class="statLabel">Trouble kana</p>
-        <p class="statValue" id="troubleValue">—</p>
-        <p class="statSub" id="troubleSub">Most missed characters</p>
+        <p class="statValue" id="troubleValue">0</p>
+        <p class="statSub">characters flagged</p>
       </div>
+    </div>
+
+    <div class="pills">
+      <span class="pill" id="poolPill">Practice: —</span>
+      <span class="pill" id="scriptPill">Script: —</span>
+      <span class="pill" id="difficultyPill">Level: —</span>
     </div>
   </div>
 
-  <!-- Settings drawer -->
-  <div class="overlay" id="overlay"></div>
+  <!-- Drawer -->
+  <div class="drawerOverlay" id="drawerOverlay"></div>
   <aside class="drawer" id="drawer" aria-label="Settings">
     <div class="drawerHeader">
-      <h2>Settings</h2>
+      <h2 class="drawerTitle">Settings</h2>
       <button class="icon" id="closeDrawerBtn" aria-label="Close settings">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
@@ -98,12 +127,12 @@
     </div>
 
     <div class="drawerSection">
-      <h2>Training mode</h2>
-      <label for="modeSelect" style="display:block;margin:12px 0 6px">Select</label>
+      <h2>Practice mode</h2>
+      <label for="modeSelect" style="display:block;margin:8px 0 6px">Mode</label>
       <select id="modeSelect">
-        <option value="balanced" selected>Balanced</option>
-        <option value="review">Review trouble kana</option>
-        <option value="new">New kana focus</option>
+        <option value="normal" selected>Normal (mix of characters/words/sentences)</option>
+        <option value="trouble">Trouble kana (characters you miss most)</option>
+        <option value="recent">Recent trouble kana (quick redo)</option>
       </select>
 
       <div class="hintBox" id="modeHint">
@@ -118,6 +147,7 @@
 
     <div class="drawerSection">
       <h2>What to practise</h2>
+
       <label><input type="checkbox" id="mixChars" checked /> Include characters</label>
       <label><input type="checkbox" id="mixWords" checked /> Include words (kana-only)</label>
       <label><input type="checkbox" id="mixSentences" checked /> Include short sentences (kana-only)</label>
@@ -144,7 +174,7 @@
       </div>
     </div>
 
-    <!-- Appearance -->
+    <!-- NEW: Appearance -->
     <div class="drawerSection">
       <h2>Appearance</h2>
       <label>
@@ -164,7 +194,7 @@
       <h3 style="margin:0">Welcome to Kana Coach</h3>
       <button class="icon" id="closeHelpBtn" aria-label="Close help">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/>
+          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
         </svg>
       </button>
     </div>

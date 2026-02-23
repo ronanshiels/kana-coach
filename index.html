@@ -113,7 +113,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.1</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.2</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>
@@ -224,7 +224,7 @@
   <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-label="Welcome">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
       <h3 style="margin:0">Welcome to Kana Coach</h3>
-      <button class="icon" id="closeHelpBtn" aria-label="Close help">
+      <button class="icon closeIcon" id="closeHelpBtn" aria-label="Close help">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
           <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
         </svg>
@@ -232,8 +232,7 @@
     </div>
 
     <p class="mini" style="margin-top:10px">
-      You’ll see kana (no kanji). Type the <span class="mono">romaji</span> and press <span class="kbd">Enter</span>.
-      Press <span class="kbd">Enter</span> again to move on.
+      Thanks for using Kana Coach — I hope it helps you get better at reading hiragana and katakana, and recognising (and even understanding) common Japanese phrases.
     </p>
 
     <div class="helpSections">
@@ -249,29 +248,29 @@
       <div class="helpSection">
         <h4>Answer checking</h4>
         <ul>
-          <li><b>Spacing matters</b> when a phrase has multiple words (you can optionally show word spaces in <b>Settings → Appearance</b>).</li>
-          <li>In <b>Easy</b> and <b>Standard</b>, spacing mistakes are marked <b>Almost</b>. In <b>Spicy</b>, spacing must be exact.</li>
           <li><b>Lenient checking</b> accepts common variants (e.g. <span class="mono">shi/si</span>, <span class="mono">chi/ti</span>), and particles like <span class="mono">は</span> (<span class="mono">wa</span>) and <span class="mono">を</span> (<span class="mono">o/wo</span>).</li>
           <li><b>Almost</b> means you were close — we’ll highlight exactly what differed.</li>
-        </ul>
+          <li><b>Spacing matters</b> when a phrase has multiple words (you can optionally show word spaces in <b>Settings → Appearance</b>).</li>
+          <li>In <b>Easy</b> and <b>Standard</b>, spacing mistakes are marked <b>Almost</b>. In <b>Spicy</b>, spacing must be exact.</li>
+</ul>
       </div>
 
       <div class="helpSection">
         <h4>Trouble kana</h4>
         <ul>
-          <li>Kana you miss repeatedly get flagged as <b>Trouble</b>, even inside words or sentences.</li>
-          <li>Get a trouble kana <b>correct 3 times in a row</b> to release it.</li>
+          <li>Kana you miss repeatedly get flagged as <b>Trouble</b>.</li>
           <li>Tap the <b>Trouble kana</b> counter to view the current list.</li>
-        </ul>
+          <li>Get a trouble kana <b>correct 3 times in a row</b> to remove it from the trouble list.</li>
+</ul>
       </div>
 
       <div class="helpSection">
         <h4>Progress</h4>
         <ul>
-          <li>Your progress is saved <b>locally on this device/browser</b>.</li>
-        </ul>
+          <li>Your progress and settings are saved <b>locally on this device/browser</b> — they won’t carry across to other devices, or to a different browser.</li>
+</ul>
       </div>
-    </div></div>
+    </div>
   </div>
 
   <!-- Trouble list modal -->
@@ -287,7 +286,7 @@
     </div>
 
     <p class="mini" style="margin-top:10px">
-      These are the kana currently flagged as Trouble for your selected Script. Get one <b>correct 3 times in a row</b> to release it.
+      These are the kana currently flagged as Trouble for your selected Script. Get one <b>correct 3 times in a row</b> to remove it from the list.
     </p>
 
     <div id="troubleList" class="troubleList">

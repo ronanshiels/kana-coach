@@ -218,7 +218,7 @@ html.kanaSerif .bigPrompt{
 
 /* Optional: emphasise word gaps when 'Show spaces' is enabled */
 html.showSpaces .bigPrompt{
-  word-spacing: 0.9em;
+  word-spacing: 0.3em;
 }
 
 .promptMeta{
@@ -550,6 +550,9 @@ select{
   border-radius: 18px;
   box-shadow: 0 16px 40px var(--shadow); /* reduced */
   padding: 14px;
+  max-height: 82vh;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
   z-index: 90;
   opacity:0;
   pointer-events:none;
@@ -660,3 +663,7 @@ select{
   outline-offset: 4px;
   border-radius: 10px;
 }
+
+/* Smaller close button for welcome modal */
+#closeHelpBtn.closeIcon{width:38px;height:38px}
+#closeHelpBtn.closeIcon svg{width:18px;height:18px}

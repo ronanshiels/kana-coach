@@ -126,6 +126,14 @@ import { loadJson, saveJson } from "./storage.js";
     // pool count line
     poolCountLine: document.getElementById("poolCountLine"),
 
+
+    // Version / changelog
+    versionTag: document.getElementById("versionTag"),
+    changelogOverlay: document.getElementById("changelogOverlay"),
+    changelogModal: document.getElementById("changelogModal"),
+    closeChangelogBtn: document.getElementById("closeChangelogBtn"),
+    changelogContent: document.getElementById("changelogContent"),
+
     // Trouble modal
     troubleOverlay: document.getElementById("troubleOverlay"),
     troubleModal: document.getElementById("troubleModal"),
@@ -203,7 +211,7 @@ import { loadJson, saveJson } from "./storage.js";
     // Only add spaces for words/sentences (never split individual characters)
     if (type === "char") return kana;
 
-    const GAP = "  "; // two spaces for a more visible word break
+    const GAP = " "; // single space; visual size controlled by CSS word-spacing
     let s = (kana || "");
 
     // Add spaces around punctuation
@@ -691,6 +699,62 @@ import { loadJson, saveJson } from "./storage.js";
     els.answer.focus();
   }
 
+  /* -----------------------------
+     Changelog (opened via version tag)
+     ----------------------------- */
+
+  const CHANGELOG = [
+    {
+      version: "v0.8.2",
+      date: "2026-02-23",
+      items: [
+        "Reduced the visual size of word-spacing when “Show spaces between words” is enabled.",
+        "Refined Welcome copy: new intro message, reordered Answer checking points, clearer Trouble kana + Progress explanations.",
+        "Welcome modal now scrolls on small screens; close (X) button slightly reduced.",
+      ]
+    },
+    {
+      version: "v0.8.1",
+      date: "2026-02-23",
+      items: [
+        "Refined sentence population (frame-based whitelisted variants approach) and updated related UI language.",
+        "Added “Show spaces between words” option and updated spacing rules for scoring.",
+        "Tidied Welcome panel and other small UI refinements."
+      ]
+    }
+  ];
+
+  function renderChangelog(){
+    if (!els.changelogContent) return;
+    const html = CHANGELOG.map(entry => {
+      const items = (entry.items || []).map(i => `<li>${escapeHtml(i)}</li>`).join("");
+      return `
+        <div class="helpSection" style="margin:0 0 10px">
+          <h4 style="margin:0 0 6px">${escapeHtml(entry.version)} <span class="mini" style="margin-left:8px">${escapeHtml(entry.date)}</span></h4>
+          <ul style="margin-top:6px">${items}</ul>
+        </div>
+      `;
+    }).join("");
+    els.changelogContent.innerHTML = html || "<p class=\"mini\">No changelog entries yet.</p>";
+  }
+
+  function openChangelog(){
+    if (!els.changelogModal || !els.changelogOverlay) return;
+    renderChangelog();
+    els.changelogModal.classList.add("open");
+    els.changelogOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeChangelog(){
+    if (!els.changelogModal || !els.changelogOverlay) return;
+    els.changelogModal.classList.remove("open");
+    els.changelogOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    els.answer.focus();
+  }
+
+
   function openTroubleModal(){
     if (!els.troubleModal || !els.troubleOverlay) return;
 
@@ -780,15 +844,31 @@ import { loadJson, saveJson } from "./storage.js";
   if (els.closeTroubleBtn) els.closeTroubleBtn.addEventListener("click", closeTroubleModal);
   if (els.troubleOverlay) els.troubleOverlay.addEventListener("click", closeTroubleModal);
 
+  // Changelog modal events
+  if (els.versionTag){
+    els.versionTag.addEventListener("click", openChangelog);
+    els.versionTag.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        openChangelog();
+      }
+    });
+  }
+  if (els.closeChangelogBtn) els.closeChangelogBtn.addEventListener("click", closeChangelog);
+  if (els.changelogOverlay) els.changelogOverlay.addEventListener("click", closeChangelog);
+
+
   function handleKey(e){
     const drawerOpen = els.drawer.classList.contains("open");
     const helpOpen = els.helpModal.classList.contains("open");
     const troubleOpen = els.troubleModal && els.troubleModal.classList.contains("open");
+    const changelogOpen = els.changelogModal && els.changelogModal.classList.contains("open");
 
-    if (drawerOpen || helpOpen || troubleOpen) {
+    if (drawerOpen || helpOpen || troubleOpen || changelogOpen) {
       if (e.key === "Escape") {
         if (helpOpen) closeHelp();
         else if (troubleOpen) closeTroubleModal();
+        else if (changelogOpen) closeChangelog();
         else closeDrawer();
         e.preventDefault();
       }

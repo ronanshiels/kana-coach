@@ -8,7 +8,7 @@
   --text:#f3f4f6;              /* soft white */
   --muted:#9aa3b2;             /* cool grey */
   --border: rgba(255,255,255,.08);
-  --shadow: rgba(0,0,0,.45);
+  --shadow: rgba(0,0,0,.38);   /* softened */
 
   /* Accent – restrained vermilion (torii-inspired, but subtle) */
   --accent:#b11226;            /* deep vermilion */
@@ -43,7 +43,7 @@
     --text:#1c1f24;
     --muted:#6b7280;
     --border: rgba(0,0,0,.08);
-    --shadow: rgba(0,0,0,.08);
+    --shadow: rgba(0,0,0,.06); /* softened */
 
     --accent:#b11226;
     --accentSoft: rgba(177,18,38,.14);
@@ -156,7 +156,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   border:1px solid var(--border);
   border-radius: var(--radius);
   background: linear-gradient(180deg, var(--card), var(--paper2));
-  box-shadow: 0 14px 30px var(--shadow);
+  box-shadow: 0 10px 22px var(--shadow); /* reduced */
   padding: 16px;
   position: relative;
   overflow:hidden;
@@ -169,7 +169,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     var(--accentSoft),
     transparent 62%
   );
-  opacity:.55;
+  opacity:.45; /* reduced */
   pointer-events:none;
 }
 .card > *{position:relative}
@@ -186,12 +186,22 @@ button:disabled{opacity:.5;cursor:not-allowed}
 }
 
 .bigPrompt{
-  font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  /* More Japanese-feeling, system-safe stack (falls back gracefully) */
+  font-family:
+    "Hiragino Mincho ProN",
+    "Hiragino Mincho Pro",
+    "Yu Mincho",
+    "YuMincho",
+    "Hiragino Serif",
+    "Noto Serif JP",
+    ui-serif,
+    Georgia,
+    serif;
   font-size: clamp(46px, 9vw, 76px);
   line-height:1.05;
   margin: 6px 0 10px;
-  letter-spacing:.5px;
-  text-shadow: 0 10px 30px color-mix(in oklab, var(--accent) 10%, transparent);
+  letter-spacing:.3px;
+  text-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 8%, transparent); /* reduced */
 }
 
 .promptMeta{
@@ -210,7 +220,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   border:1px solid var(--border);
   border-radius: var(--radius);
   background: linear-gradient(180deg, var(--paper), var(--paper2));
-  box-shadow: 0 10px 25px var(--shadow);
+  box-shadow: 0 8px 18px var(--shadow); /* reduced */
   padding: 14px 14px;
   min-height: 124px;
 }
@@ -242,8 +252,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
   padding-top: 14px;
   border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
   box-shadow:
-    0 18px 44px var(--shadow),
-    0 0 0 1px color-mix(in oklab, var(--accent) 10%, transparent);
+    0 12px 28px var(--shadow), /* reduced */
+    0 0 0 1px color-mix(in oklab, var(--accent) 8%, transparent); /* reduced */
   text-align:center;
 }
 .answerCard::before{
@@ -255,7 +265,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
     var(--accentSoft),
     transparent 60%
   );
-  opacity:.55;
+  opacity:.45; /* reduced */
   pointer-events:none;
 }
 .answerInner{
@@ -304,7 +314,7 @@ input[type="text"]:focus{
   border:1px solid var(--border);
   border-radius: var(--radius);
   background: linear-gradient(180deg, var(--card), var(--paper2));
-  box-shadow: 0 10px 22px var(--shadow);
+  box-shadow: 0 8px 18px var(--shadow); /* reduced */
   padding: 12px 12px;
   min-height: 84px;
   min-width: 0;
@@ -376,7 +386,7 @@ input[type="text"]:focus{
   width: min(380px, 92vw);
   background: linear-gradient(180deg, var(--paper), var(--paper2));
   border-left: 1px solid var(--border);
-  box-shadow: -18px 0 40px var(--shadow);
+  box-shadow: -14px 0 28px var(--shadow); /* reduced */
   transform: translateX(102%);
   transition: transform .22s ease;
   z-index: 60;
@@ -451,7 +461,7 @@ select{
   background: linear-gradient(180deg, var(--paper), var(--paper2));
   border:1px solid var(--border);
   border-radius: 18px;
-  box-shadow: 0 20px 60px var(--shadow);
+  box-shadow: 0 16px 40px var(--shadow); /* reduced */
   padding: 14px;
   z-index: 90;
   opacity:0;

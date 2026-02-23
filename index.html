@@ -112,8 +112,8 @@
     </div>
   </div>
 
-  <!-- Version (bottom-right) -->
-  <div class="versionTag" aria-label="App version">v0.6</div>
+  <!-- Version (bottom-right) — clickable to open changelog -->
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.7</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>
@@ -275,6 +275,23 @@
     </p>
 
     <div id="troubleList" class="troubleList">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <!-- Changelog modal (opened by clicking version number) -->
+  <div class="modalOverlay" id="changelogOverlay"></div>
+  <div class="modal" id="changelogModal" role="dialog" aria-modal="true" aria-label="Changelog">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h3 style="margin:0">Changelog</h3>
+      <button class="icon" id="closeChangelogBtn" aria-label="Close changelog">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="changelogContent" style="margin-top:10px">
       <!-- populated by JS -->
     </div>
   </div>

@@ -98,7 +98,7 @@ body{
 }
 
 .brandLogo{
-  height: 28px;
+  height: 38px;
   width: auto;
   display:block;
 }
@@ -436,7 +436,7 @@ input[type="text"]:focus{
   .statValue{font-size:24px}
   .pill{font-size:11.5px}
   input[type="text"]{font-size:18px}
-  .brandLogo{height:26px}
+  .brandLogo{height:34px}
 }
 
 /* Drawer */
@@ -639,6 +639,18 @@ select{
   opacity: .75;
   letter-spacing: .2px;
   user-select: none;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 40;
+}
+
+.versionTag:hover{
+  opacity: 1;
+  text-decoration: underline;
+}
+
+.versionTag:focus-visible{
+  outline: 2px solid color-mix(in oklab, var(--accent) 70%, transparent);
+  outline-offset: 4px;
+  border-radius: 10px;
 }

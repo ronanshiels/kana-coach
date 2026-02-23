@@ -14,6 +14,22 @@ import { buildItems, buildCharItems } from "./data.js";
 import { loadJson, saveJson } from "./storage.js";
 
 (() => {
+  const APP_VERSION = "v0.7";
+  const CHANGELOG = [
+    {
+      version: "v0.7",
+      date: "2026-02-23",
+      since: "v0.6",
+      changes: [
+        "Sentence pool rebuilt: sentences are now curated, category-tagged, and filtered via Settings (with a cooldown to avoid immediate repeats).",
+        "Words expanded to a larger generated pool with difficulty tagging; Difficulty selection now consistently gates characters/words/sentences.",
+        "Trouble kana system improved: items can be released after 3 correct answers in a row, with add/remove animations and a tappable Trouble list modal.",
+        "UI/Settings tidy-up: Script + Level moved to the top of ‘What to practise’; Pool count now reflects (and sits below) sentence category filters.",
+        "Version number is now clickable and opens this changelog pop-up.",
+      ],
+    },
+  ];
+
   const LS_KEY_UNIT_STATS = "kanaCoach.unitStats.v1";
   const LS_KEY_RECENT_UNITS = "kanaCoach.recentUnits.v1";
   const LS_KEY_TUTORIAL = "kanaCoach.tutorialSeen.v1";
@@ -129,6 +145,13 @@ import { loadJson, saveJson } from "./storage.js";
     troubleModal: document.getElementById("troubleModal"),
     closeTroubleBtn: document.getElementById("closeTroubleBtn"),
     troubleList: document.getElementById("troubleList"),
+
+    // Changelog
+    versionTag: document.getElementById("versionTag"),
+    changelogOverlay: document.getElementById("changelogOverlay"),
+    changelogModal: document.getElementById("changelogModal"),
+    closeChangelogBtn: document.getElementById("closeChangelogBtn"),
+    changelogContent: document.getElementById("changelogContent"),
   };
 
   const state = {
@@ -676,6 +699,46 @@ import { loadJson, saveJson } from "./storage.js";
     document.body.style.overflow = "hidden";
   }
 
+  function renderChangelog(){
+    if (!els.changelogContent) return;
+
+    const entry = CHANGELOG[0];
+    if (!entry){
+      els.changelogContent.innerHTML = `<p class="mini">No changelog entries yet.</p>`;
+      return;
+    }
+
+    const items = (entry.changes || []).map(c => `<li>${escapeHtml(c)}</li>`).join("");
+    els.changelogContent.innerHTML = `
+      <p class="mini" style="margin:0 0 10px">
+        <b>${escapeHtml(entry.version)}</b> — ${escapeHtml(entry.date)}<br>
+        Changes since <b>${escapeHtml(entry.since || "previous")}</b>
+      </p>
+      <ul style="margin:0; padding-left:18px">
+        ${items}
+      </ul>
+      <p class="mini" style="margin-top:10px;opacity:.9">
+        Tip: future releases will add new entries here.
+      </p>
+    `;
+  }
+
+  function openChangelog(){
+    if (!els.changelogModal || !els.changelogOverlay) return;
+    renderChangelog();
+    els.changelogModal.classList.add("open");
+    els.changelogOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeChangelog(){
+    if (!els.changelogModal || !els.changelogOverlay) return;
+    els.changelogModal.classList.remove("open");
+    els.changelogOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    els.answer.focus();
+  }
+
   function closeTroubleModal(){
     if (!els.troubleModal || !els.troubleOverlay) return;
     els.troubleModal.classList.remove("open");
@@ -727,15 +790,31 @@ import { loadJson, saveJson } from "./storage.js";
   if (els.closeTroubleBtn) els.closeTroubleBtn.addEventListener("click", closeTroubleModal);
   if (els.troubleOverlay) els.troubleOverlay.addEventListener("click", closeTroubleModal);
 
+  // Changelog modal events
+  if (els.versionTag){
+    els.versionTag.textContent = APP_VERSION;
+    els.versionTag.addEventListener("click", openChangelog);
+    els.versionTag.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        openChangelog();
+      }
+    });
+  }
+  if (els.closeChangelogBtn) els.closeChangelogBtn.addEventListener("click", closeChangelog);
+  if (els.changelogOverlay) els.changelogOverlay.addEventListener("click", closeChangelog);
+
   function handleKey(e){
     const drawerOpen = els.drawer.classList.contains("open");
     const helpOpen = els.helpModal.classList.contains("open");
     const troubleOpen = els.troubleModal && els.troubleModal.classList.contains("open");
+    const changelogOpen = els.changelogModal && els.changelogModal.classList.contains("open");
 
-    if (drawerOpen || helpOpen || troubleOpen) {
+    if (drawerOpen || helpOpen || troubleOpen || changelogOpen) {
       if (e.key === "Escape") {
         if (helpOpen) closeHelp();
         else if (troubleOpen) closeTroubleModal();
+        else if (changelogOpen) closeChangelog();
         else closeDrawer();
         e.preventDefault();
       }

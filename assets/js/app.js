@@ -101,6 +101,13 @@ import { loadJson, saveJson } from "./storage.js";
     difficultySelect: document.getElementById("difficultySelect"),
 
     kanaFontSerif: document.getElementById("kanaFontSerif"),
+
+    // sentence categories
+    sentenceCatBox: document.getElementById("sentenceCatBox"),
+    sentenceCatChecks: Array.from(document.querySelectorAll(".sentCat")),
+
+    // NEW: pool count line
+    poolCountLine: document.getElementById("poolCountLine"),
   };
 
   const state = {
@@ -132,6 +139,25 @@ import { loadJson, saveJson } from "./storage.js";
     applyKanaFont();
   }
 
+  function getSelectedSentenceCategories(){
+    const checks = els.sentenceCatChecks || [];
+    const selected = checks.filter(c => c.checked).map(c => c.value);
+    return selected.length ? selected : checks.map(c => c.value);
+  }
+
+  function updateSentenceCategoryUI(){
+    const on = !!els.mixSentences?.checked;
+
+    if (!els.sentenceCatBox) return;
+
+    els.sentenceCatBox.classList.toggle("collapsed", !on);
+    els.sentenceCatBox.classList.toggle("disabled", !on);
+
+    for (const cb of (els.sentenceCatChecks || [])){
+      cb.disabled = !on;
+    }
+  }
+
   function getSettings(){
     return {
       mixChars: els.mixChars.checked,
@@ -141,6 +167,7 @@ import { loadJson, saveJson } from "./storage.js";
       allowAlmost: els.allowAlmost.checked,
       script: els.scriptSelect.value,
       difficulty: els.difficultySelect.value,
+      sentenceCategories: getSelectedSentenceCategories(),
     };
   }
 
@@ -153,6 +180,27 @@ import { loadJson, saveJson } from "./storage.js";
     els.poolPill.textContent = `Practice: ${what.join(" + ") || "chars"}`;
     els.scriptPill.textContent = `Script: ${s.script === "both" ? "hiragana + katakana" : s.script}`;
     els.difficultyPill.textContent = `Level: ${s.difficulty}`;
+  }
+
+  function updatePoolCountUI(){
+    if (!els.poolCountLine) return;
+
+    const counts = { char:0, word:0, sentence:0 };
+    for (const it of (state.pool || [])){
+      if (it?.type === "char") counts.char++;
+      else if (it?.type === "word") counts.word++;
+      else if (it?.type === "sentence") counts.sentence++;
+    }
+    const total = counts.char + counts.word + counts.sentence;
+
+    const parts = [];
+    if (counts.char) parts.push(`chars ${counts.char}`);
+    if (counts.word) parts.push(`words ${counts.word}`);
+    if (counts.sentence) parts.push(`sentences ${counts.sentence}`);
+
+    els.poolCountLine.textContent = total
+      ? `Pool: ${total} (${parts.join(" • ")})`
+      : "Pool: —";
   }
 
   function countTroubleKana(){
@@ -177,6 +225,7 @@ import { loadJson, saveJson } from "./storage.js";
     state.settings = getSettings();
     setPills();
     state.pool = buildItems(state.settings);
+    updatePoolCountUI();
   }
 
   function applyMode(resetIndex){
@@ -237,6 +286,7 @@ import { loadJson, saveJson } from "./storage.js";
   }
 
   function rebuildPool(){
+    updateSentenceCategoryUI();
     buildPool();
     applyMode(true);
   }
@@ -270,8 +320,10 @@ import { loadJson, saveJson } from "./storage.js";
     const meaningText = meaning && meaning.trim()
       ? meaning
       : (state.current?.type === "char"
-          ? (state.current?.meaning || "Kana character")
-          : "—");
+        ? (state.current?.meaning || "Kana character")
+        : (state.current?.type === "word"
+          ? "Kana word"
+          : "Kana sentence"));
 
     const def = `
       <div class="defBox">
@@ -439,7 +491,6 @@ import { loadJson, saveJson } from "./storage.js";
     document.body.style.overflow = "hidden";
   }
   function closeHelp(){
-    // Mark tutorial as seen on close (no separate "Got it" button)
     saveJson(LS_KEY_TUTORIAL, true);
     els.helpModal.classList.remove("open");
     els.helpOverlay.classList.remove("open");
@@ -463,6 +514,8 @@ import { loadJson, saveJson } from "./storage.js";
 
   [els.mixChars, els.mixWords, els.mixSentences, els.allowLenient, els.allowAlmost, els.scriptSelect, els.difficultySelect]
     .forEach(el => el.addEventListener("change", rebuildPool));
+
+  (els.sentenceCatChecks || []).forEach(cb => cb.addEventListener("change", rebuildPool));
 
   els.resetSessionBtn.addEventListener("click", resetSession);
   els.resetHistoryBtn.addEventListener("click", resetHistory);
@@ -500,12 +553,12 @@ import { loadJson, saveJson } from "./storage.js";
   });
 
   function setInitialPills(){
+    updateSentenceCategoryUI();
     buildPool();
     applyMode(true);
     updateStatsUI();
   }
 
-  // Apply saved prompt font preference early
   applyKanaFont();
 
   setInitialPills();

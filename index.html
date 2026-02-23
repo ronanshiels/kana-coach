@@ -29,20 +29,17 @@
                 font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
                 font-size="28"
                 font-weight="850"
-                fill="currentColor">Kana
-            <tspan dx="6"
-                   dy="1"
+                fill="currentColor">Kana<tspan dx="2"
+                   dy="0"
                    font-family="Hiragino Mincho ProN, Yu Mincho, Noto Serif JP, ui-serif, Georgia, serif"
                    font-size="28"
                    font-weight="700"
-                   fill="var(--accent)">あ</tspan>
-            <tspan dx="6"
-                   dy="-1"
+                   fill="var(--accent)">あ</tspan><tspan dx="2"
+                   dy="0"
                    font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
                    font-size="28"
                    font-weight="500"
-                   fill="currentColor">Coach</tspan>
-          </text>
+                   fill="currentColor">Coach</tspan></text>
         </svg>
       </div>
 
@@ -120,7 +117,7 @@
       <h2 class="drawerTitle">Settings</h2>
       <button class="icon" id="closeDrawerBtn" aria-label="Close settings">
         <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
+          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/>
         </svg>
       </button>
     </div>
@@ -151,6 +148,25 @@
       <label><input type="checkbox" id="mixWords" checked /> Include words (kana-only)</label>
       <label><input type="checkbox" id="mixSentences" checked /> Include short sentences (kana-only)</label>
 
+      <!-- NEW: Pool size line -->
+      <div class="poolCountLine" id="poolCountLine">Pool: —</div>
+
+      <!-- Sentence categories (collapses/disables if sentences not enabled) -->
+      <div id="sentenceCatBox" class="sentenceCatBox">
+        <div class="hintBox" style="margin-top:8px">
+          Sentence categories
+        </div>
+        <label><input class="sentCat" type="checkbox" value="travel" checked /> Travel &amp; basics</label>
+        <label><input class="sentCat" type="checkbox" value="food_drink" checked /> Food &amp; drink</label>
+        <label><input class="sentCat" type="checkbox" value="transport" checked /> Transport</label>
+        <label><input class="sentCat" type="checkbox" value="directions" checked /> Directions</label>
+        <label><input class="sentCat" type="checkbox" value="accommodation" checked /> Accommodation</label>
+        <label><input class="sentCat" type="checkbox" value="shopping" checked /> Shopping</label>
+        <label><input class="sentCat" type="checkbox" value="social" checked /> Social</label>
+        <label><input class="sentCat" type="checkbox" value="time_money" checked /> Time &amp; money</label>
+        <label><input class="sentCat" type="checkbox" value="emergencies" checked /> Emergencies</label>
+      </div>
+
       <label><input type="checkbox" id="allowLenient" checked /> Lenient checking (common romanisation variants)</label>
       <label><input type="checkbox" id="allowAlmost" checked /> Mark close-but-not-standard as “Almost”</label>
 
@@ -173,7 +189,7 @@
       </div>
     </div>
 
-    <!-- NEW: Appearance -->
+    <!-- Appearance -->
     <div class="drawerSection">
       <h2>Appearance</h2>
       <label>

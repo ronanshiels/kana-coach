@@ -766,7 +766,15 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
+    
     {
+      version: "v0.8.4",
+      date: "2026-02-23",
+      items: [
+        "Disabled OS-level autocorrect, autocapitalisation, autocomplete and spellcheck on the romaji input field to prevent unintended input changes on mobile.",
+      ]
+    },
+{
       version: "v0.8.3",
       date: "2026-02-23",
       items: [

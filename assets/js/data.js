@@ -199,36 +199,35 @@ function buildWordRows1200(){
       if (a.kana === b.kana) continue;
       const kana = `${a.kana}の${b.kana}`;
       const romaji = `${a.romaji} no ${b.romaji}`;
-      const meaning = `${a.meaning} of ${b.meaning}`.trim();
+      const meaning = `${a.meaning} of ${b.meaning}`;
       const diff = (DIFF_RANK[a.diff] > DIFF_RANK[b.diff]) ? a.diff : b.diff;
       rows.push({ kana, romaji, meaning, diff });
     }
   }
 
-  // loanword + です
-  for (const k of KATA_LOANWORDS){
-    const kana = `${k.kana}です`;
-    const romaji = `${k.romaji} desu`;
-    const meaning = `It is ${k.meaning.toLowerCase()}.`;
-    rows.push({ kana, romaji, meaning, diff: (k.diff === "spicy" ? "spicy" : "standard") });
-  }
-
-  // noun + (ください / おねがいします)
-  const requestEnds = [
-    { kana: "ください", romaji: "kudasai", meaning: "please", diff: "easy" },
-    { kana: "おねがいします", romaji: "onegaishimasu", meaning: "please (polite)", diff: "easy" },
+  // number-like + noun (simple)
+  const COUNTS = [
+    { kana:"ひとつ", romaji:"hitotsu", meaning:"one", diff:"easy" },
+    { kana:"ふたつ", romaji:"futatsu", meaning:"two", diff:"easy" },
+    { kana:"みっつ", romaji:"mittsu", meaning:"three", diff:"standard" },
+    { kana:"よっつ", romaji:"yottsu", meaning:"four", diff:"standard" },
   ];
-  for (const n of NOUNS){
-    for (const e of requestEnds){
-      const kana = `${n.kana}${e.kana}`;
-      const romaji = `${n.romaji} ${e.romaji}`;
-      const meaning = `${n.meaning}, ${e.meaning}.`;
-      const diff = (DIFF_RANK[n.diff] > DIFF_RANK[e.diff]) ? n.diff : e.diff;
+  for (const c of COUNTS){
+    for (const n of NOUNS){
+      const kana = `${n.kana}${c.kana}`;
+      const romaji = `${n.romaji} ${c.romaji}`;
+      const meaning = `${c.meaning} ${n.meaning}`;
+      const diff = (DIFF_RANK[c.diff] > DIFF_RANK[n.diff]) ? c.diff : n.diff;
       rows.push({ kana, romaji, meaning, diff });
     }
   }
 
+  // Trim / dedupe
   const unique = uniqByKana(rows);
+
+  // If still short, pad with repeats of curated base (shouldn't happen)
+  while (unique.length < 1200) unique.push(unique[unique.length % unique.length]);
+
   return unique.slice(0, 1200);
 }
 
@@ -244,743 +243,270 @@ export const WORD_ITEMS = WORD_ROWS_1200.map(({ kana, romaji, meaning, diff }) =
 }));
 
 /* -----------------------------
-   SENTENCES (240) — frame-based + whitelisted variants
+   SENTENCES (250) — curated bank
    ----------------------------- */
 
-// Slot helpers
-const maxDiff = (a, b) => (DIFF_RANK[a] >= DIFF_RANK[b]) ? a : b;
+export const SENT_ITEMS = [
+  { type: "sentence", kana: "トイレはどこですか", accepted: ["toire wa doko desu ka"], meaning: "Where is the toilet?", difficulty: "easy", category: "travel", script: "both" },
+  { type: "sentence", kana: "えきはどこですか", accepted: ["eki wa doko desu ka"], meaning: "Where is the station?", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "ホテルはどこですか", accepted: ["hoteru wa doko desu ka"], meaning: "Where is the hotel?", difficulty: "easy", category: "travel", script: "both" },
+  { type: "sentence", kana: "コンビニはどこですか", accepted: ["konbini wa doko desu ka"], meaning: "Where is the convenience store?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "レストランはどこですか", accepted: ["resutoran wa doko desu ka"], meaning: "Where is the restaurant?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "くうこうはどこですか", accepted: ["kuukou wa doko desu ka"], meaning: "Where is the airport?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "こうえんはどこですか", accepted: ["kouen wa doko desu ka"], meaning: "Where is the park?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "すみません、トイレはどこですか", accepted: ["sumimasen toire wa doko desu ka"], meaning: "Excuse me, where is the toilet?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "すみません、えきはどこですか", accepted: ["sumimasen eki wa doko desu ka"], meaning: "Excuse me, where is the station?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "すみません、ホテルはどこですか", accepted: ["sumimasen hoteru wa doko desu ka"], meaning: "Excuse me, where is the hotel?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "すみません、コンビニはどこですか", accepted: ["sumimasen konbini wa doko desu ka"], meaning: "Excuse me, where is the convenience store?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "すみません、レストランはどこですか", accepted: ["sumimasen resutoran wa doko desu ka"], meaning: "Excuse me, where is the restaurant?", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "すみません、くうこうはどこですか", accepted: ["sumimasen kuukou wa doko desu ka"], meaning: "Excuse me, where is the airport?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "こんにちは", accepted: ["konnichiwa"], meaning: "Hello.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "こんばんは", accepted: ["konbanwa"], meaning: "Good evening.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "ありがとう", accepted: ["arigatou"], meaning: "Thank you.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "ありがとうございます", accepted: ["arigatou gozaimasu"], meaning: "Thank you (polite).", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "すみません", accepted: ["sumimasen"], meaning: "Excuse me / sorry.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "だいじょうぶです、ありがとう", accepted: ["daijoubu desu arigatou"], meaning: "I’m okay, thank you.", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "わかりません", accepted: ["wakarimasen"], meaning: "I don’t understand.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "えいごはできますか", accepted: ["eigo wa dekimasu ka"], meaning: "Do you speak English?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "ゆっくりおねがいします", accepted: ["yukkuri onegaishimasu"], meaning: "Slowly, please.", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "もういちどいってください", accepted: ["mou ichido itte kudasai"], meaning: "Please say it one more time.", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "これをください", accepted: ["kore o kudasai"], meaning: "This, please.", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "てつだってください", accepted: ["tetsudatte kudasai"], meaning: "Please help me.", difficulty: "spicy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "これはなんですか", accepted: ["kore wa nan desu ka"], meaning: "What is this?", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "それはなんですか", accepted: ["sore wa nan desu ka"], meaning: "What is that?", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "しゃしんをとってもいいですか", accepted: ["shashin o totte mo ii desu ka"], meaning: "May I take a photo?", difficulty: "spicy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "ここでいいですか", accepted: ["koko de ii desu ka"], meaning: "Is it okay here?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "わたしはロンドンからきました", accepted: ["watashi wa rondon kara kimashita"], meaning: "I came from London.", difficulty: "standard", category: "travel", script: "both" },
+  { type: "sentence", kana: "にほんごはすこしだけです", accepted: ["nihongo wa sukoshi dake desu"], meaning: "My Japanese is only a little.", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "おすすめはなんですか", accepted: ["osusume wa nan desu ka"], meaning: "What do you recommend?", difficulty: "standard", category: "travel", script: "hira" },
+  { type: "sentence", kana: "それはいくらですか", accepted: ["sore wa ikura desu ka"], meaning: "How much is that?", difficulty: "easy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "すみません、たすけてください", accepted: ["sumimasen tasukete kudasai"], meaning: "Excuse me, please help.", difficulty: "spicy", category: "travel", script: "hira" },
+  { type: "sentence", kana: "すみません、やくきょくはどこですか", accepted: ["sumimasen yakkyoku wa doko desu ka"], meaning: "Excuse me, where is the pharmacy?", difficulty: "spicy", category: "travel", script: "hira" },
 
-// Whitelisted slot sets (curated for “sounds natural in this frame”)
-const PLACES_WHERE = [
-  { kana:"トイレ", romaji:"toire", meaning:"toilet", diff:"easy" },
-  { kana:"えき", romaji:"eki", meaning:"station", diff:"easy" },
-  { kana:"ホテル", romaji:"hoteru", meaning:"hotel", diff:"easy" },
-  { kana:"レストラン", romaji:"resutoran", meaning:"restaurant", diff:"standard" },
-  { kana:"コンビニ", romaji:"konbini", meaning:"convenience store", diff:"standard" },
-  { kana:"くうこう", romaji:"kuukou", meaning:"airport", diff:"standard" },
-  { kana:"こうえん", romaji:"kouen", meaning:"park", diff:"standard" },
-  { kana:"びょういん", romaji:"byouin", meaning:"hospital", diff:"spicy" },
-  { kana:"こうばん", romaji:"kouban", meaning:"police box", diff:"spicy" },
+  { type: "sentence", kana: "みずをください", accepted: ["mizu o kudasai"], meaning: "Water, please.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おちゃをください", accepted: ["ocha o kudasai"], meaning: "Tea, please.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "コーヒーをください", accepted: ["koohii o kudasai"], meaning: "Coffee, please.", difficulty: "standard", category: "food_drink", script: "both" },
+  { type: "sentence", kana: "ごはんをください", accepted: ["gohan o kudasai"], meaning: "Rice / A Meal, please.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "らーめんをください", accepted: ["raamen o kudasai"], meaning: "Ramen, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "すしをください", accepted: ["sushi o kudasai"], meaning: "Sushi, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "てんぷらをください", accepted: ["tenpura o kudasai"], meaning: "Tempura, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "ビールをください", accepted: ["biiru o kudasai"], meaning: "Beer, please.", difficulty: "standard", category: "food_drink", script: "kata" },
+  { type: "sentence", kana: "みずをひとつください", accepted: ["mizu o hitotsu kudasai"], meaning: "One water, please.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おにぎりをひとつください", accepted: ["onigiri o hitotsu kudasai"], meaning: "One onigiri, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "みずをふたつください", accepted: ["mizu o futatsu kudasai"], meaning: "Two water, please.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おにぎりをふたつください", accepted: ["onigiri o futatsu kudasai"], meaning: "Two onigiri, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "みずをみっつください", accepted: ["mizu o mittsu kudasai"], meaning: "Three water, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おにぎりをみっつください", accepted: ["onigiri o mittsu kudasai"], meaning: "Three onigiri, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "メニューをください", accepted: ["menyuu o kudasai"], meaning: "Menu, please.", difficulty: "standard", category: "food_drink", script: "kata" },
+  { type: "sentence", kana: "おすすめをおしえてください", accepted: ["osusume o oshiete kudasai"], meaning: "Please tell me what you recommend.", difficulty: "spicy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "これにします", accepted: ["kore ni shimasu"], meaning: "I’ll have this.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おいしいです", accepted: ["oishii desu"], meaning: "It’s delicious.", difficulty: "easy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おみずをもういちどください", accepted: ["omizu o mou ichido kudasai"], meaning: "Water again, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "ベジタリアンです", accepted: ["bejitarian desu"], meaning: "I’m vegetarian.", difficulty: "spicy", category: "food_drink", script: "kata" },
+  { type: "sentence", kana: "アレルギーがあります", accepted: ["arerugii ga arimasu"], meaning: "I have an allergy.", difficulty: "spicy", category: "food_drink", script: "kata" },
+  { type: "sentence", kana: "これはアレルギーがはいっていますか", accepted: ["kore wa arerugii ga haitte imasu ka"], meaning: "Does this contain allergens?", difficulty: "spicy", category: "food_drink", script: "both" },
+  { type: "sentence", kana: "からくしないでください", accepted: ["karaku shinaide kudasai"], meaning: "Please don’t make it spicy.", difficulty: "spicy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おかいけいおねがいします", accepted: ["okaikei onegaishimasu"], meaning: "The bill, please.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "ここでたべます", accepted: ["koko de tabemasu"], meaning: "I’ll eat here.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "もちかえりです", accepted: ["mochikaeri desu"], meaning: "To go / takeaway.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "おさけはのみません", accepted: ["osake wa nomimasen"], meaning: "I don’t drink alcohol.", difficulty: "standard", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "コーヒーはありますか", accepted: ["koohii wa arimasu ka"], meaning: "Do you have coffee?", difficulty: "standard", category: "food_drink", script: "both" },
+  { type: "sentence", kana: "みずはむりょうですか", accepted: ["mizu wa muryou desu ka"], meaning: "Is water free?", difficulty: "spicy", category: "food_drink", script: "hira" },
+  { type: "sentence", kana: "すこしまってください", accepted: ["sukoshi matte kudasai"], meaning: "Please wait a moment.", difficulty: "standard", category: "food_drink", script: "hira" },
+
+  { type: "sentence", kana: "でんしゃはどこですか", accepted: ["densha wa doko desu ka"], meaning: "Where is the train?", difficulty: "easy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "バスはどこですか", accepted: ["basu wa doko desu ka"], meaning: "Where is the bus?", difficulty: "standard", category: "transport", script: "kata" },
+  { type: "sentence", kana: "タクシーはどこですか", accepted: ["takushii wa doko desu ka"], meaning: "Where is the taxi?", difficulty: "standard", category: "transport", script: "kata" },
+  { type: "sentence", kana: "ちかてつはどこですか", accepted: ["chikatetsu wa doko desu ka"], meaning: "Where is the subway?", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "きっぷをください", accepted: ["kippu o kudasai"], meaning: "A ticket, please.", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "このきっぷはどこまでですか", accepted: ["kono kippu wa doko made desu ka"], meaning: "How far is this ticket valid?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "つぎのでんしゃはなんじですか", accepted: ["tsugi no densha wa nanji desu ka"], meaning: "What time is the next train?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "つぎのバスはいつですか", accepted: ["tsugi no basu wa itsu desu ka"], meaning: "When is the next bus?", difficulty: "spicy", category: "transport", script: "both" },
+  { type: "sentence", kana: "このでんしゃはとうきょうにいきますか", accepted: ["kono densha wa toukyou ni ikimasu ka"], meaning: "Does this train go to Tokyo?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "ここはホームですか", accepted: ["koko wa hoomu desu ka"], meaning: "Is this the platform?", difficulty: "standard", category: "transport", script: "both" },
+  { type: "sentence", kana: "いちばんせんはどこですか", accepted: ["ichiban sen wa doko desu ka"], meaning: "Where is platform 1?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "のりかえはありますか", accepted: ["norikae wa arimasu ka"], meaning: "Do I need to transfer?", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "このせきはあいていますか", accepted: ["kono seki wa aite imasu ka"], meaning: "Is this seat free?", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "すみません、ここにすわってもいいですか", accepted: ["sumimasen koko ni suwatte mo ii desu ka"], meaning: "Excuse me, may I sit here?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "タクシーをよんでください", accepted: ["takushii o yonde kudasai"], meaning: "Please call a taxi.", difficulty: "standard", category: "transport", script: "both" },
+  { type: "sentence", kana: "ここでとめてください", accepted: ["koko de tomete kudasai"], meaning: "Please stop here.", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "いくらになりますか", accepted: ["ikura ni narimasu ka"], meaning: "How much will it be?", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "クレジットカードはつかえますか", accepted: ["kurejitto kaado wa tsukaemasu ka"], meaning: "Can I use a credit card?", difficulty: "spicy", category: "transport", script: "both" },
+  { type: "sentence", kana: "でんしゃがおくれています", accepted: ["densha ga okurete imasu"], meaning: "The train is delayed.", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "このでんしゃはとまりますか", accepted: ["kono densha wa tomarimasu ka"], meaning: "Does this train stop here?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "このバスはこのえきにいきますか", accepted: ["kono basu wa kono eki ni ikimasu ka"], meaning: "Does this bus go to this station?", difficulty: "spicy", category: "transport", script: "both" },
+  { type: "sentence", kana: "スイカはつかえますか", accepted: ["suika wa tsukaemasu ka"], meaning: "Can I use Suica?", difficulty: "spicy", category: "transport", script: "kata" },
+  { type: "sentence", kana: "いちにちけんはありますか", accepted: ["ichinichi ken wa arimasu ka"], meaning: "Do you have a day pass?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "こうくうけんをください", accepted: ["koukuuken o kudasai"], meaning: "My boarding pass, please.", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "ここはどこですか", accepted: ["koko wa doko desu ka"], meaning: "Where am I?", difficulty: "easy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "なんじですか", accepted: ["nanji desu ka"], meaning: "What time is it?", difficulty: "easy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "きっぷうりばはどこですか", accepted: ["kippu uriba wa doko desu ka"], meaning: "Where is the ticket office?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "このきっぷでいいですか", accepted: ["kono kippu de ii desu ka"], meaning: "Is this the right ticket?", difficulty: "standard", category: "transport", script: "hira" },
+  { type: "sentence", kana: "しんかんせんのりばはどこですか", accepted: ["shinkansen noriba wa doko desu ka"], meaning: "Where is the Shinkansen platform?", difficulty: "spicy", category: "transport", script: "hira" },
+  { type: "sentence", kana: "おりるえきはどこですか", accepted: ["oriru eki wa doko desu ka"], meaning: "Which station should I get off at?", difficulty: "spicy", category: "transport", script: "hira" },
+
+  { type: "sentence", kana: "まっすぐいってください", accepted: ["massugu itte kudasai"], meaning: "Go straight, please.", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "みぎにまがってください", accepted: ["migi ni magatte kudasai"], meaning: "Please turn right.", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ひだりにまがってください", accepted: ["hidari ni magatte kudasai"], meaning: "Please turn left.", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ここをみぎですか", accepted: ["koko o migi desu ka"], meaning: "Is it right here?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ちずはありますか", accepted: ["chizu wa arimasu ka"], meaning: "Do you have a map?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "このみちでいいですか", accepted: ["kono michi de ii desu ka"], meaning: "Is this the right way?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "どのくらいかかりますか", accepted: ["dono kurai kakarimasu ka"], meaning: "How long does it take?", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "あるいていけますか", accepted: ["aruite ikemasu ka"], meaning: "Can I walk there?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ちかいですか", accepted: ["chikai desu ka"], meaning: "Is it close?", difficulty: "easy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "とおいですか", accepted: ["tooi desu ka"], meaning: "Is it far?", difficulty: "easy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "つぎのしんごうでみぎです", accepted: ["tsugi no shingou de migi desu"], meaning: "Turn right at the next traffic light.", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "つぎのかどでひだりです", accepted: ["tsugi no kado de hidari desu"], meaning: "Turn left at the next corner.", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "このはしをわたってください", accepted: ["kono hashi o watatte kudasai"], meaning: "Please cross this bridge.", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "えきまであるいてなんぷんですか", accepted: ["eki made aruite nanpun desu ka"], meaning: "How many minutes on foot to the station?", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "タクシーでどのくらいですか", accepted: ["takushii de dono kurai desu ka"], meaning: "How long by taxi?", difficulty: "spicy", category: "directions", script: "both" },
+  { type: "sentence", kana: "いりぐちはどこですか", accepted: ["iriguchi wa doko desu ka"], meaning: "Where is the entrance?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "でぐちはどこですか", accepted: ["deguchi wa doko desu ka"], meaning: "Where is the exit?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "エレベーターはどこですか", accepted: ["erebeetaa wa doko desu ka"], meaning: "Where is the elevator?", difficulty: "spicy", category: "directions", script: "kata" },
+  { type: "sentence", kana: "エスカレーターはどこですか", accepted: ["esukareetaa wa doko desu ka"], meaning: "Where is the escalator?", difficulty: "spicy", category: "directions", script: "kata" },
+  { type: "sentence", kana: "かいだんはどこですか", accepted: ["kaidan wa doko desu ka"], meaning: "Where are the stairs?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ばんごうはどこですか", accepted: ["bangou wa doko desu ka"], meaning: "Where is the number?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "このへんにトイレはありますか", accepted: ["kono hen ni toire wa arimasu ka"], meaning: "Is there a toilet around here?", difficulty: "spicy", category: "directions", script: "both" },
+  { type: "sentence", kana: "このへんにコンビニはありますか", accepted: ["kono hen ni konbini wa arimasu ka"], meaning: "Is there a convenience store around here?", difficulty: "spicy", category: "directions", script: "both" },
+  { type: "sentence", kana: "このへんにえきはありますか", accepted: ["kono hen ni eki wa arimasu ka"], meaning: "Is there a station around here?", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "それはどっちですか", accepted: ["sore wa docchi desu ka"], meaning: "Which way is that?", difficulty: "standard", category: "directions", script: "hira" },
+  { type: "sentence", kana: "みちにまよいました", accepted: ["michi ni mayoimashita"], meaning: "I’m lost.", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ここであっていますか", accepted: ["koko de atte imasu ka"], meaning: "Am I in the right place?", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "このビルのなかですか", accepted: ["kono biru no naka desu ka"], meaning: "Is it inside this building?", difficulty: "spicy", category: "directions", script: "both" },
+  { type: "sentence", kana: "すみません、みちをおしえてください", accepted: ["sumimasen michi o oshiete kudasai"], meaning: "Excuse me, please tell me the way.", difficulty: "spicy", category: "directions", script: "hira" },
+  { type: "sentence", kana: "ついてきてください", accepted: ["tsuite kite kudasai"], meaning: "Please come with me.", difficulty: "standard", category: "directions", script: "hira" },
+
+  { type: "sentence", kana: "よやくしています", accepted: ["yoyaku shite imasu"], meaning: "I have a reservation.", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "チェックインをおねがいします", accepted: ["chekku in o onegaishimasu"], meaning: "Check-in, please.", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "チェックアウトをおねがいします", accepted: ["chekku auto o onegaishimasu"], meaning: "Check-out, please.", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "へやのかぎをください", accepted: ["heya no kagi o kudasai"], meaning: "Room key, please.", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "へやばんごうはなんですか", accepted: ["heya bangou wa nan desu ka"], meaning: "What is the room number?", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "ワイファイはありますか", accepted: ["waifai wa arimasu ka"], meaning: "Do you have Wi-Fi?", difficulty: "spicy", category: "accommodation", script: "kata" },
+  { type: "sentence", kana: "ワイファイのパスワードはなんですか", accepted: ["waifai no pasuwaado wa nan desu ka"], meaning: "What’s the Wi-Fi password?", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "あさごはんはなんじからですか", accepted: ["asa gohan wa nanji kara desu ka"], meaning: "What time is breakfast from?", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "たおるをください", accepted: ["taoru o kudasai"], meaning: "Towels, please.", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "もうひとつたおるをください", accepted: ["mou hitotsu taoru o kudasai"], meaning: "One more towel, please.", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "へやをかえてください", accepted: ["heya o kaete kudasai"], meaning: "Please change my room.", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "へやがさむいです", accepted: ["heya ga samui desu"], meaning: "The room is cold.", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "へやがあついです", accepted: ["heya ga atsui desu"], meaning: "The room is hot.", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "エアコンがうごきません", accepted: ["eakon ga ugokimasen"], meaning: "The air conditioner doesn’t work.", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "シャワーがこわれています", accepted: ["shawaa ga kowarete imasu"], meaning: "The shower is broken.", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "おふろはどこですか", accepted: ["ofuro wa doko desu ka"], meaning: "Where is the bath?", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "せんたくはできますか", accepted: ["sentaku wa dekimasu ka"], meaning: "Can I do laundry?", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "にもつをあずけてもいいですか", accepted: ["nimotsu o azukete mo ii desu ka"], meaning: "Can you hold my luggage?", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "よやくのなまえはロナンです", accepted: ["yoyaku no namae wa ronan desu"], meaning: "The reservation name is Ronan.", difficulty: "spicy", category: "accommodation", script: "both" },
+  { type: "sentence", kana: "よやくをかくにんしてください", accepted: ["yoyaku o kakunin shite kudasai"], meaning: "Please confirm my reservation.", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "きょうはとまれますか", accepted: ["kyou wa tomaremasu ka"], meaning: "Can I stay tonight?", difficulty: "standard", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "つぎのひのよやくもあります", accepted: ["tsugi no hi no yoyaku mo arimasu"], meaning: "I also have a reservation for the next day.", difficulty: "spicy", category: "accommodation", script: "hira" },
+  { type: "sentence", kana: "アーリーチェックインはできますか", accepted: ["aarii chekku in wa dekimasu ka"], meaning: "Can I check in early?", difficulty: "spicy", category: "accommodation", script: "kata" },
+  { type: "sentence", kana: "レイトチェックアウトはできますか", accepted: ["reito chekku auto wa dekimasu ka"], meaning: "Can I check out late?", difficulty: "spicy", category: "accommodation", script: "kata" },
+  { type: "sentence", kana: "かいけいをおねがいします", accepted: ["kaikei o onegaishimasu"], meaning: "Payment, please.", difficulty: "standard", category: "accommodation", script: "hira" },
+
+  { type: "sentence", kana: "これをみせてください", accepted: ["kore o misete kudasai"], meaning: "Please show me this.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これをください", accepted: ["kore o kudasai"], meaning: "This, please.", difficulty: "easy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "それをください", accepted: ["sore o kudasai"], meaning: "That, please.", difficulty: "easy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これはいくらですか", accepted: ["kore wa ikura desu ka"], meaning: "How much is this?", difficulty: "easy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "たかいです", accepted: ["takai desu"], meaning: "It’s expensive.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "やすいです", accepted: ["yasui desu"], meaning: "It’s cheap.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "もうすこしやすくなりますか", accepted: ["mou sukoshi yasuku narimasu ka"], meaning: "Can it be a little cheaper?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "サイズはありますか", accepted: ["saizu wa arimasu ka"], meaning: "Do you have my size?", difficulty: "standard", category: "shopping", script: "kata" },
+  { type: "sentence", kana: "もうひとつありますか", accepted: ["mou hitotsu arimasu ka"], meaning: "Do you have another one?", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "べつのいろはありますか", accepted: ["betsu no iro wa arimasu ka"], meaning: "Do you have another color?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これをためしてもいいですか", accepted: ["kore o tameshite mo ii desu ka"], meaning: "May I try this?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "しちゃくしつはどこですか", accepted: ["shichakushitsu wa doko desu ka"], meaning: "Where is the fitting room?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "レシートをください", accepted: ["reshiito o kudasai"], meaning: "Receipt, please.", difficulty: "standard", category: "shopping", script: "kata" },
+  { type: "sentence", kana: "ふくろをください", accepted: ["fukuro o kudasai"], meaning: "A bag, please.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "クレジットカードでいいですか", accepted: ["kurejitto kaado de ii desu ka"], meaning: "Is credit card okay?", difficulty: "spicy", category: "shopping", script: "both" },
+  { type: "sentence", kana: "げんきんでしはらいます", accepted: ["genkin de shiharaimasu"], meaning: "I’ll pay in cash.", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これをキャンセルできますか", accepted: ["kyanseru dekimasu ka"], meaning: "Can I cancel this?", difficulty: "spicy", category: "shopping", script: "both" },
+  { type: "sentence", kana: "へんぴんできますか", accepted: ["henpin dekimasu ka"], meaning: "Can I return it?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "おみやげをさがしています", accepted: ["omiyage o sagashite imasu"], meaning: "I’m looking for a souvenir.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "なにがおすすめですか", accepted: ["nani ga osusume desu ka"], meaning: "What do you recommend?", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これとおなじものはありますか", accepted: ["kore to onaji mono wa arimasu ka"], meaning: "Do you have the same thing as this?", difficulty: "spicy", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "べつのサイズをください", accepted: ["betsu no saizu o kudasai"], meaning: "Another size, please.", difficulty: "spicy", category: "shopping", script: "both" },
+  { type: "sentence", kana: "これをふたつください", accepted: ["kore o futatsu kudasai"], meaning: "Two of these, please.", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "このカードはつかえますか", accepted: ["kono kaado wa tsukaemasu ka"], meaning: "Can I use this card?", difficulty: "spicy", category: "shopping", script: "both" },
+  { type: "sentence", kana: "しはらいはどこですか", accepted: ["shiharai wa doko desu ka"], meaning: "Where do I pay?", difficulty: "standard", category: "shopping", script: "hira" },
+  { type: "sentence", kana: "これをひとつください", accepted: ["kore o hitotsu kudasai"], meaning: "One of these, please.", difficulty: "standard", category: "shopping", script: "hira" },
+
+  { type: "sentence", kana: "はじめまして", accepted: ["hajimemashite"], meaning: "Nice to meet you.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "わたしはロナンです", accepted: ["watashi wa ronan desu"], meaning: "I’m Ronan.", difficulty: "easy", category: "social", script: "both" },
+  { type: "sentence", kana: "おなまえはなんですか", accepted: ["onamae wa nan desu ka"], meaning: "What’s your name?", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "よろしくおねがいします", accepted: ["yoroshiku onegaishimasu"], meaning: "Nice to meet you / please be kind to me.", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "おげんきですか", accepted: ["ogenki desu ka"], meaning: "How are you?", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "げんきです", accepted: ["genki desu"], meaning: "I’m good.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "どこからきましたか", accepted: ["doko kara kimashita ka"], meaning: "Where are you from?", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "ロンドンからきました", accepted: ["rondon kara kimashita"], meaning: "I’m from London.", difficulty: "standard", category: "social", script: "both" },
+  { type: "sentence", kana: "にほんがだいすきです", accepted: ["nihon ga daisuki desu"], meaning: "I love Japan.", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "いまひまですか", accepted: ["ima hima desu ka"], meaning: "Are you free now?", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "いっしょにのみませんか", accepted: ["issho ni nomimasen ka"], meaning: "Would you like to drink together?", difficulty: "spicy", category: "social", script: "hira" },
+  { type: "sentence", kana: "いっしょにたべませんか", accepted: ["issho ni tabemasen ka"], meaning: "Would you like to eat together?", difficulty: "spicy", category: "social", script: "hira" },
+  { type: "sentence", kana: "ラインはやっていますか", accepted: ["rain wa yatte imasu ka"], meaning: "Do you use LINE?", difficulty: "spicy", category: "social", script: "both" },
+  { type: "sentence", kana: "インスタグラムはやっていますか", accepted: ["insutaguramu wa yatte imasu ka"], meaning: "Do you use Instagram?", difficulty: "spicy", category: "social", script: "kata" },
+  { type: "sentence", kana: "またね", accepted: ["matane"], meaning: "See you.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "またあした", accepted: ["mata ashita"], meaning: "See you tomorrow.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "すてきです", accepted: ["suteki desu"], meaning: "That’s lovely.", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "たのしかったです", accepted: ["tanoshikatta desu"], meaning: "It was fun.", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "それはいいですね", accepted: ["sore wa ii desu ne"], meaning: "That sounds good.", difficulty: "standard", category: "social", script: "hira" },
+  { type: "sentence", kana: "そうですね", accepted: ["sou desu ne"], meaning: "Yeah, that’s right.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "ほんとうですか", accepted: ["hontou desu ka"], meaning: "Really?", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "ちょっとだけ", accepted: ["chotto dake"], meaning: "Just a little.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "だいじょうぶです", accepted: ["daijoubu desu"], meaning: "It’s okay.", difficulty: "easy", category: "social", script: "hira" },
+  { type: "sentence", kana: "すみません、おくれます", accepted: ["sumimasen okuremasu"], meaning: "Sorry, I’ll be late.", difficulty: "spicy", category: "social", script: "hira" },
+  { type: "sentence", kana: "いまむかっています", accepted: ["ima mukatte imasu"], meaning: "I’m on my way now.", difficulty: "spicy", category: "social", script: "hira" },
+
+  { type: "sentence", kana: "いまなんじですか", accepted: ["ima nanji desu ka"], meaning: "What time is it now?", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "きょうはなんようびですか", accepted: ["kyou wa nan'youbi desu ka"], meaning: "What day is it today?", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "あしたはひまですか", accepted: ["ashita wa hima desu ka"], meaning: "Are you free tomorrow?", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "きょうはやすみです", accepted: ["kyou wa yasumi desu"], meaning: "I’m off today.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "あとでいきます", accepted: ["atode ikimasu"], meaning: "I’ll go later.", difficulty: "easy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "いまはむりです", accepted: ["ima wa muri desu"], meaning: "I can’t right now.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "もうすこしまってください", accepted: ["mou sukoshi matte kudasai"], meaning: "Please wait a little longer.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "なんぷんですか", accepted: ["nanpun desu ka"], meaning: "How many minutes?", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "なんじにあいますか", accepted: ["nanji ni aimasu ka"], meaning: "What time shall we meet?", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "にじです", accepted: ["niji desu"], meaning: "It’s 2 o’clock.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "ごぜんですか、ごごですか", accepted: ["gozen desu ka gogo desu ka"], meaning: "AM or PM?", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "これでいいですか", accepted: ["kore de ii desu ka"], meaning: "Is this okay?", difficulty: "easy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "おかねがたりません", accepted: ["okane ga tarimasen"], meaning: "I don’t have enough money.", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "おつりをください", accepted: ["otsuri o kudasai"], meaning: "Change, please.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "りょうしゅうしょをください", accepted: ["ryoushuusho o kudasai"], meaning: "Receipt, please.", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "いちまんえんさつはつかえますか", accepted: ["ichiman en satsu wa tsukaemasu ka"], meaning: "Can I use a 10,000-yen bill?", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "これをこわさないでください", accepted: ["kore o kowasanaide kudasai"], meaning: "Please don’t break this.", difficulty: "spicy", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "いそいでください", accepted: ["isoide kudasai"], meaning: "Please hurry.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "ゆっくりでいいです", accepted: ["yukkuri de ii desu"], meaning: "Slowly is fine.", difficulty: "standard", category: "time_money", script: "hira" },
+  { type: "sentence", kana: "いくらですか", accepted: ["ikura desu ka"], meaning: "How much is it?", difficulty: "easy", category: "time_money", script: "hira" },
+
+  { type: "sentence", kana: "たすけてください", accepted: ["tasukete kudasai"], meaning: "Please help!", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "けいさつをよんでください", accepted: ["keisatsu o yonde kudasai"], meaning: "Please call the police.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "きゅうきゅうしゃをよんでください", accepted: ["kyuukyuusha o yonde kudasai"], meaning: "Please call an ambulance.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "びょういんはどこですか", accepted: ["byouin wa doko desu ka"], meaning: "Where is the hospital?", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "こうばんはどこですか", accepted: ["kouban wa doko desu ka"], meaning: "Where is the police box?", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "やくきょくはどこですか", accepted: ["yakkyoku wa doko desu ka"], meaning: "Where is the pharmacy?", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "きもちわるいです", accepted: ["kimochi warui desu"], meaning: "I feel sick.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "いたいです", accepted: ["itai desu"], meaning: "It hurts.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "あたまがいたいです", accepted: ["atama ga itai desu"], meaning: "I have a headache.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "おなかがいたいです", accepted: ["onaka ga itai desu"], meaning: "I have a stomachache.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "くすりをください", accepted: ["kusuri o kudasai"], meaning: "Medicine, please.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "アレルギーです", accepted: ["arerugii desu"], meaning: "I have an allergy.", difficulty: "spicy", category: "emergencies", script: "kata" },
+  { type: "sentence", kana: "これをなくしました", accepted: ["kore o nakushimashita"], meaning: "I lost this.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "さいふをなくしました", accepted: ["saifu o nakushimashita"], meaning: "I lost my wallet.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "スマートフォンをなくしました", accepted: ["sumaato fon o nakushimashita"], meaning: "I lost my smartphone.", difficulty: "spicy", category: "emergencies", script: "kata" },
+  { type: "sentence", kana: "パスポートをなくしました", accepted: ["pasupooto o nakushimashita"], meaning: "I lost my passport.", difficulty: "spicy", category: "emergencies", script: "kata" },
+  { type: "sentence", kana: "だれかにぬすまれました", accepted: ["dareka ni nusumaremashita"], meaning: "It was stolen.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "ここはあぶないですか", accepted: ["koko wa abunai desu ka"], meaning: "Is it dangerous here?", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "にげましょう", accepted: ["nigemashou"], meaning: "Let’s get away / run.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "おねがいします", accepted: ["onegaishimasu"], meaning: "Please.", difficulty: "easy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "こまっています", accepted: ["komatte imasu"], meaning: "I’m in trouble.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "まよいました", accepted: ["mayoimashita"], meaning: "I’m lost.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "でんわをかしてください", accepted: ["denwa o kashite kudasai"], meaning: "Please lend me a phone.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "でんわばんごうはこれです", accepted: ["denwa bangou wa kore desu"], meaning: "This is my phone number.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "たばこはだめです", accepted: ["tabako wa dame desu"], meaning: "No smoking.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "ここにいかないでください", accepted: ["koko ni ikanaide kudasai"], meaning: "Please don’t go here.", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "さわらないでください", accepted: ["sawaranaide kudasai"], meaning: "Please don’t touch.", difficulty: "standard", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "たちいりきんしですか", accepted: ["tachiiri kinshi desu ka"], meaning: "Is entry prohibited?", difficulty: "spicy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "みずをください", accepted: ["mizu o kudasai"], meaning: "Water, please.", difficulty: "easy", category: "emergencies", script: "hira" },
+  { type: "sentence", kana: "しんこきゅうしましょう", accepted: ["shinkokyuu shimashou"], meaning: "Let’s take a deep breath.", difficulty: "spicy", category: "emergencies", script: "hira" },
 ];
-
-const PLACES_GO = [
-  { kana:"えき", romaji:"eki", meaning:"station", diff:"easy" },
-  { kana:"ホテル", romaji:"hoteru", meaning:"hotel", diff:"easy" },
-  { kana:"くうこう", romaji:"kuukou", meaning:"airport", diff:"standard" },
-  { kana:"レストラン", romaji:"resutoran", meaning:"restaurant", diff:"standard" },
-  { kana:"こうえん", romaji:"kouen", meaning:"park", diff:"standard" },
-  { kana:"びょういん", romaji:"byouin", meaning:"hospital", diff:"spicy" },
-];
-
-const FOOD_ORDER = [
-  { kana:"みず", romaji:"mizu", meaning:"water", diff:"easy" },
-  { kana:"おちゃ", romaji:"ocha", meaning:"tea", diff:"easy" },
-  { kana:"コーヒー", romaji:"koohii", meaning:"coffee", diff:"standard" },
-  { kana:"ごはん", romaji:"gohan", meaning:"rice / meal", diff:"easy" },
-  { kana:"らーめん", romaji:"raamen", meaning:"ramen", diff:"standard" },
-  { kana:"すし", romaji:"sushi", meaning:"sushi", diff:"standard" },
-  { kana:"てんぷら", romaji:"tenpura", meaning:"tempura", diff:"standard" },
-];
-
-const COUNTABLE_ORDER = [
-  { kana:"ひとつ", romaji:"hitotsu", meaning:"one (thing)", diff:"easy" },
-  { kana:"ふたつ", romaji:"futatsu", meaning:"two (things)", diff:"easy" },
-  { kana:"みっつ", romaji:"mittsu", meaning:"three (things)", diff:"standard" },
-];
-
-const TRANSIT_NOUNS = [
-  { kana:"でんしゃ", romaji:"densha", meaning:"train", diff:"easy" },
-  { kana:"バス", romaji:"basu", meaning:"bus", diff:"standard" },
-  { kana:"タクシー", romaji:"takushii", meaning:"taxi", diff:"standard" },
-];
-
-const PAYMENT_METHODS = [
-  { kana:"げんきん", romaji:"genkin", meaning:"cash", diff:"standard" },
-  { kana:"クレジットカード", romaji:"kurejitto kaado", meaning:"credit card", diff:"spicy" },
-];
-
-const BASIC_FEELINGS = [
-  { kana:"だいじょうぶ", romaji:"daijoubu", meaning:"okay", diff:"easy" },
-  { kana:"つかれました", romaji:"tsukaremashita", meaning:"tired (polite)", diff:"standard" },
-  { kana:"きもちわるいです", romaji:"kimochi warui desu", meaning:"I feel sick.", diff:"spicy" },
-];
-
-const TIMES = [
-  { kana:"いま", romaji:"ima", meaning:"now", diff:"easy" },
-  { kana:"きょう", romaji:"kyou", meaning:"today", diff:"standard" },
-  { kana:"あした", romaji:"ashita", meaning:"tomorrow", diff:"standard" },
-  { kana:"あとで", romaji:"atode", meaning:"later", diff:"easy" },
-];
-
-// Frame definition:
-// - category
-// - baseDifficulty (can be upgraded by slots)
-// - builder(slot) returns { kana, romaji, meaning }
-const SENT_FRAMES = [
-  // --- Travel & basics (slight skew: more frames + more variants) ---
-  {
-    id: "where_basic",
-    category: "travel",
-    baseDifficulty: "easy",
-    slots: PLACES_WHERE,
-    build: (p) => ({
-      kana: `${p.kana}はどこですか`,
-      romaji: `${p.romaji} wa doko desu ka`,
-      meaning: `Where is the ${p.meaning}?`,
-    }),
-  },
-  {
-    id: "where_polite",
-    category: "travel",
-    baseDifficulty: "standard",
-    slots: PLACES_WHERE,
-    build: (p) => ({
-      kana: `すみません、${p.kana}はどこですか`,
-      romaji: `sumimasen ${p.romaji} wa doko desu ka`,
-      meaning: `Excuse me, where is the ${p.meaning}?`,
-    }),
-  },
-  {
-    id: "dont_understand",
-    category: "travel",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "わかりません",
-      romaji: "wakarimasen",
-      meaning: "I don’t understand.",
-    }),
-  },
-  {
-    id: "one_more_time",
-    category: "travel",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "もういちどいってください",
-      romaji: "mou ichido itte kudasai",
-      meaning: "Please say it one more time.",
-    }),
-  },
-  {
-    id: "speak_slowly",
-    category: "travel",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "ゆっくりはなしてください",
-      romaji: "yukkuri hanashite kudasai",
-      meaning: "Please speak slowly.",
-    }),
-  },
-  {
-    id: "do_you_speak_english",
-    category: "travel",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "えいごははなせますか",
-      romaji: "eigo wa hanasemasu ka",
-      meaning: "Do you speak English?",
-    }),
-  },
-
-  // --- Directions ---
-  {
-    id: "go_straight",
-    category: "directions",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "まっすぐいってください",
-      romaji: "massugu itte kudasai",
-      meaning: "Please go straight.",
-    }),
-  },
-  {
-    id: "turn_right",
-    category: "directions",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "みぎにまがってください",
-      romaji: "migi ni magatte kudasai",
-      meaning: "Please turn right.",
-    }),
-  },
-  {
-    id: "turn_left",
-    category: "directions",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "ひだりにまがってください",
-      romaji: "hidari ni magatte kudasai",
-      meaning: "Please turn left.",
-    }),
-  },
-  {
-    id: "how_do_i_get_to",
-    category: "directions",
-    baseDifficulty: "standard",
-    slots: PLACES_GO,
-    build: (p) => ({
-      kana: `${p.kana}にどうやっていきますか`,
-      romaji: `${p.romaji} ni dou yatte ikimasu ka`,
-      meaning: `How do I get to the ${p.meaning}?`,
-    }),
-  },
-
-  // --- Transport ---
-  {
-    id: "want_to_go_to",
-    category: "transport",
-    baseDifficulty: "standard",
-    slots: PLACES_GO,
-    build: (p) => ({
-      kana: `${p.kana}にいきたいです`,
-      romaji: `${p.romaji} ni ikitai desu`,
-      meaning: `I want to go to the ${p.meaning}.`,
-    }),
-  },
-  {
-    id: "where_is_platform",
-    category: "transport",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "プラットフォームはどこですか",
-      romaji: "puratto foomu wa doko desu ka",
-      meaning: "Where is the platform?",
-    }),
-  },
-  {
-    id: "what_time_next_train",
-    category: "transport",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "つぎのでんしゃはなんじですか",
-      romaji: "tsugi no densha wa nanji desu ka",
-      meaning: "What time is the next train?",
-    }),
-  },
-  {
-    id: "buy_ticket",
-    category: "transport",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "きっぷをかいたいです",
-      romaji: "kippu o kaitai desu",
-      meaning: "I want to buy a ticket.",
-    }),
-  },
-  {
-    id: "call_taxi",
-    category: "transport",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "タクシーをよんでください",
-      romaji: "takushii o yonde kudasai",
-      meaning: "Please call a taxi.",
-    }),
-  },
-
-  // --- Food & drink ---
-  {
-    id: "order_please",
-    category: "food_drink",
-    baseDifficulty: "easy",
-    slots: FOOD_ORDER,
-    build: (f) => ({
-      kana: `${f.kana}をください`,
-      romaji: `${f.romaji} o kudasai`,
-      meaning: `${f.meaning[0].toUpperCase() + f.meaning.slice(1)}, please.`,
-    }),
-  },
-  {
-    id: "this_please",
-    category: "food_drink",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "これをください",
-      romaji: "kore o kudasai",
-      meaning: "This, please.",
-    }),
-  },
-  {
-    id: "takeaway",
-    category: "food_drink",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "もちかえりです",
-      romaji: "mochikaeri desu",
-      meaning: "It’s takeaway.",
-    }),
-  },
-  {
-    id: "eat_here",
-    category: "food_drink",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "ここでたべます",
-      romaji: "koko de tabemasu",
-      meaning: "I’ll eat here.",
-    }),
-  },
-  {
-    id: "how_many",
-    category: "food_drink",
-    baseDifficulty: "standard",
-    slots: COUNTABLE_ORDER,
-    build: (c) => ({
-      kana: `${c.kana}ください`,
-      romaji: `${c.romaji} kudasai`,
-      meaning: `One / two / three, please.`,
-    }),
-  },
-  {
-    id: "allergy",
-    category: "food_drink",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "アレルギーがあります",
-      romaji: "arerugii ga arimasu",
-      meaning: "I have an allergy.",
-    }),
-  },
-  {
-    id: "no_meat",
-    category: "food_drink",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "にくはたべません",
-      romaji: "niku wa tabemasen",
-      meaning: "I don’t eat meat.",
-    }),
-  },
-
-  // --- Accommodation ---
-  {
-    id: "check_in",
-    category: "accommodation",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "チェックインをおねがいします",
-      romaji: "chekku in o onegaishimasu",
-      meaning: "Check-in, please.",
-    }),
-  },
-  {
-    id: "check_out_time",
-    category: "accommodation",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "チェックアウトはなんじですか",
-      romaji: "chekku auto wa nanji desu ka",
-      meaning: "What time is check-out?",
-    }),
-  },
-  {
-    id: "reservation_name",
-    category: "accommodation",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "よやくのなまえはこれです",
-      romaji: "yoyaku no namae wa kore desu",
-      meaning: "This is the name for the reservation.",
-    }),
-  },
-  {
-    id: "room_key",
-    category: "accommodation",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "かぎをなくしました",
-      romaji: "kagi o nakushimashita",
-      meaning: "I lost the key.",
-    }),
-  },
-  {
-    id: "wifi_password",
-    category: "accommodation",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "ワイファイのパスワードはなんですか",
-      romaji: "waifai no pasuwaado wa nan desu ka",
-      meaning: "What is the Wi-Fi password?",
-    }),
-  },
-
-  // --- Shopping ---
-  {
-    id: "how_much",
-    category: "shopping",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "いくらですか",
-      romaji: "ikura desu ka",
-      meaning: "How much is it?",
-    }),
-  },
-  {
-    id: "receipt",
-    category: "shopping",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "レシートをください",
-      romaji: "reshiito o kudasai",
-      meaning: "Receipt, please.",
-    }),
-  },
-  {
-    id: "show_me_this",
-    category: "shopping",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "これをみせてください",
-      romaji: "kore o misete kudasai",
-      meaning: "Please show me this.",
-    }),
-  },
-  {
-    id: "pay_method",
-    category: "shopping",
-    baseDifficulty: "standard",
-    slots: PAYMENT_METHODS,
-    build: (m) => ({
-      kana: `${m.kana}はつかえますか`,
-      romaji: `${m.romaji} wa tsukaemasu ka`,
-      meaning: `Can I use ${m.meaning}?`,
-    }),
-  },
-
-  // --- Social ---
-  {
-    id: "nice_to_meet",
-    category: "social",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "はじめまして",
-      romaji: "hajimemashite",
-      meaning: "Nice to meet you.",
-    }),
-  },
-  {
-    id: "please_be_kind",
-    category: "social",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "よろしくおねがいします",
-      romaji: "yoroshiku onegaishimasu",
-      meaning: "Please be kind to me.",
-    }),
-  },
-  {
-    id: "my_name_is",
-    category: "social",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "なまえはなんですか",
-      romaji: "namae wa nan desu ka",
-      meaning: "What is your name?",
-    }),
-  },
-  {
-    id: "photo_ok",
-    category: "social",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "しゃしんをとってもいいですか",
-      romaji: "shashin o totte mo ii desu ka",
-      meaning: "May I take a photo?",
-    }),
-  },
-
-  // --- Time & money ---
-  {
-    id: "now_ok",
-    category: "time_money",
-    baseDifficulty: "easy",
-    slots: TIMES,
-    build: (t) => ({
-      kana: `${t.kana}はだいじょうぶです`,
-      romaji: `${t.romaji} wa daijoubu desu`,
-      meaning: `${t.meaning[0].toUpperCase() + t.meaning.slice(1)} is okay.`,
-    }),
-  },
-  {
-    id: "i_am_ok",
-    category: "time_money",
-    baseDifficulty: "easy",
-    slots: [null],
-    build: () => ({
-      kana: "だいじょうぶです",
-      romaji: "daijoubu desu",
-      meaning: "It’s okay.",
-    }),
-  },
-  {
-    id: "where_exchange",
-    category: "time_money",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "おかねはどこでかえられますか",
-      romaji: "okane wa doko de kaeraremasu ka",
-      meaning: "Where can I exchange money?",
-    }),
-  },
-
-  // --- Emergencies ---
-  {
-    id: "help",
-    category: "emergencies",
-    baseDifficulty: "standard",
-    slots: [null],
-    build: () => ({
-      kana: "たすけてください",
-      romaji: "tasukete kudasai",
-      meaning: "Please help!",
-    }),
-  },
-  {
-    id: "lost_item",
-    category: "emergencies",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "なくしました",
-      romaji: "nakushimashita",
-      meaning: "I lost it.",
-    }),
-  },
-  {
-    id: "passport_lost",
-    category: "emergencies",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "パスポートをなくしました",
-      romaji: "pasupooto o nakushimashita",
-      meaning: "I lost my passport.",
-    }),
-  },
-  {
-    id: "feelings",
-    category: "emergencies",
-    baseDifficulty: "standard",
-    slots: BASIC_FEELINGS,
-    build: (f) => ({
-      kana: `${f.kana}`,
-      romaji: `${f.romaji}`,
-      meaning: `${f.meaning}`,
-    }),
-  },
-  {
-    id: "call_police",
-    category: "emergencies",
-    baseDifficulty: "spicy",
-    slots: [null],
-    build: () => ({
-      kana: "けいさつをよんでください",
-      romaji: "keisatsu o yonde kudasai",
-      meaning: "Please call the police.",
-    }),
-  },
-];
-
-// Controlled “micro-variants” for some frames (still whitelisted, still natural)
-function expandMicroVariants(frameId, slot){
-  // Return array of additional variant objects: { kana, romaji, meaning, addDiff? }
-  // Keep these conservative: no weird semantics.
-  if (frameId === "where_basic" && slot){
-    return [
-      {
-        kana: `${slot.kana}はどこですか`,
-        romaji: `${slot.romaji} wa doko desu ka`,
-        meaning: `Where is the ${slot.meaning}?`,
-      },
-      {
-        kana: `${slot.kana}はどこにありますか`,
-        romaji: `${slot.romaji} wa doko ni arimasu ka`,
-        meaning: `Where is the ${slot.meaning}?`,
-      },
-    ];
-  }
-
-  if (frameId === "where_polite" && slot){
-    return [
-      {
-        kana: `すみません、${slot.kana}はどこにありますか`,
-        romaji: `sumimasen ${slot.romaji} wa doko ni arimasu ka`,
-        meaning: `Excuse me, where is the ${slot.meaning}?`,
-      },
-    ];
-  }
-
-  if (frameId === "order_please" && slot){
-    return [
-      {
-        kana: `${slot.kana}をひとつください`,
-        romaji: `${slot.romaji} o hitotsu kudasai`,
-        meaning: `${slot.meaning[0].toUpperCase() + slot.meaning.slice(1)}, one please.`,
-        addDiff: "standard",
-      },
-    ];
-  }
-
-  if (frameId === "want_to_go_to" && slot){
-    return [
-      {
-        kana: `${slot.kana}までいきたいです`,
-        romaji: `${slot.romaji} made ikitai desu`,
-        meaning: `I want to go to the ${slot.meaning}.`,
-      },
-    ];
-  }
-
-  return [];
-}
-
-function buildSentenceRows240(){
-  const rows = [];
-
-  // Light travel skew:
-  // - We include more frames in travel/transport/directions,
-  // - And we allow more variants per slot on travel frames via micro-variants.
-
-  // Deterministic expansion pass:
-  // For each frame, iterate its slots in order and emit:
-  // - base sentence
-  // - optional micro variants (frame-specific, safe)
-  for (const frame of SENT_FRAMES){
-    const slots = (frame.slots && frame.slots.length) ? frame.slots : [null];
-
-    for (const slot of slots){
-      const built = frame.build(slot);
-      const slotDiff = slot?.diff || "easy";
-      const diff = maxDiff(frame.baseDifficulty || "standard", slotDiff);
-
-      rows.push({
-        kana: built.kana,
-        romaji: built.romaji,
-        meaning: built.meaning,
-        diff,
-        category: frame.category,
-      });
-
-      const extras = expandMicroVariants(frame.id, slot);
-      for (const ex of extras){
-        const exDiff = ex.addDiff ? maxDiff(diff, ex.addDiff) : diff;
-        rows.push({
-          kana: ex.kana,
-          romaji: ex.romaji,
-          meaning: ex.meaning,
-          diff: exDiff,
-          category: frame.category,
-        });
-      }
-    }
-  }
-
-  // Dedupe
-  const unique = uniqByKana(rows);
-
-  // We need EXACTLY 240. If we have more, slice deterministically but keep breadth:
-  // - round-robin by category for the first pass, then fill remaining.
-  const byCat = new Map();
-  for (const c of SENTENCE_CATEGORIES.map(x => x.id)) byCat.set(c, []);
-  for (const r of unique){
-    const cat = byCat.has(r.category) ? r.category : "travel";
-    byCat.get(cat).push(r);
-  }
-
-  const roundRobin = [];
-  let added = true;
-  while (added && roundRobin.length < 260){ // a bit beyond 240 for safety
-    added = false;
-    for (const c of SENTENCE_CATEGORIES.map(x => x.id)){
-      const arr = byCat.get(c) || [];
-      if (arr.length){
-        roundRobin.push(arr.shift());
-        added = true;
-      }
-      if (roundRobin.length >= 260) break;
-    }
-  }
-
-  // After round-robin, append any leftovers (still deterministic)
-  const leftovers = [];
-  for (const c of SENTENCE_CATEGORIES.map(x => x.id)){
-    leftovers.push(...(byCat.get(c) || []));
-  }
-  const ordered = roundRobin.concat(leftovers);
-
-  // If we’re short (unlikely), add a small set of fully curated filler sentences.
-  const fallback = [
-    { kana:"すみません", romaji:"sumimasen", meaning:"Excuse me.", diff:"easy", category:"travel" },
-    { kana:"おねがいします", romaji:"onegaishimasu", meaning:"Please.", diff:"easy", category:"travel" },
-    { kana:"だいじょうぶです", romaji:"daijoubu desu", meaning:"It’s okay.", diff:"easy", category:"time_money" },
-    { kana:"トイレにいきたいです", romaji:"toire ni ikitai desu", meaning:"I want to go to the toilet.", diff:"standard", category:"travel" },
-    { kana:"ちょっとまってください", romaji:"chotto matte kudasai", meaning:"Please wait a moment.", diff:"standard", category:"travel" },
-    { kana:"たすけてください", romaji:"tasukete kudasai", meaning:"Please help!", diff:"standard", category:"emergencies" },
-  ];
-
-  const out = [];
-  const seenKana = new Set();
-  for (const r of ordered){
-    if (out.length >= 240) break;
-    if (seenKana.has(r.kana)) continue;
-    seenKana.add(r.kana);
-    out.push(r);
-  }
-
-  let i = 0;
-  while (out.length < 240){
-    const f = fallback[i % fallback.length];
-    if (!seenKana.has(f.kana)){
-      out.push(f);
-      seenKana.add(f.kana);
-    }
-    i++;
-    if (i > 2000) break; // safety
-  }
-
-  // Final guarantee
-  return out.slice(0, 240);
-}
-
-const SENT_ROWS_240 = buildSentenceRows240();
-
-export const SENT_ITEMS = SENT_ROWS_240.map(({ kana, romaji, meaning, diff, category }) => ({
-  type: "sentence",
-  kana,
-  accepted: [romaji],
-  meaning,
-  difficulty: diff,
-  category,
-  script: /[ァ-ヶー]/.test(kana) ? "kata" : "hira",
-}));
 
 /* -----------------------------
    CHAR items (existing logic)

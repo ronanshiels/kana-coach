@@ -18,6 +18,11 @@ import { loadJson, saveJson } from "./storage.js";
   const LS_KEY_RECENT_UNITS = "kanaCoach.recentUnits.v1";
   const LS_KEY_TUTORIAL = "kanaCoach.tutorialSeen.v1";
   const LS_KEY_KANA_FONT = "kanaCoach.kanaFont.v1"; // "rounded" | "serif"
+  const LS_KEY_RECENT_SENTENCES = "kanaCoach.recentSentences.v1";
+
+  // Avoid repeating sentence prompts that were shown very recently.
+  // This is especially helpful when the sentence pool is smaller due to category filters.
+  const SENTENCE_COOLDOWN_WINDOW = 40;
 
   function shuffle(arr){
     const a = arr.slice();
@@ -139,11 +144,27 @@ import { loadJson, saveJson } from "./storage.js";
 
     unitStats: loadJson(LS_KEY_UNIT_STATS, {}),
     recentUnits: loadJson(LS_KEY_RECENT_UNITS, []),
+    recentSentences: loadJson(LS_KEY_RECENT_SENTENCES, []),
 
     kanaFont: loadJson(LS_KEY_KANA_FONT, "rounded"),
 
     troubleSubTimeout: null,
   };
+
+  function rememberRecentSentence(kana){
+    if (!kana) return;
+    // De-dupe (move to front)
+    state.recentSentences = (state.recentSentences || []).filter(x => x !== kana);
+    state.recentSentences.unshift(kana);
+    if (state.recentSentences.length > 200) state.recentSentences = state.recentSentences.slice(0, 200);
+    saveJson(LS_KEY_RECENT_SENTENCES, state.recentSentences);
+  }
+
+  function isSentenceInCooldown(kana){
+    if (!kana) return false;
+    const recent = state.recentSentences || [];
+    return recent.slice(0, SENTENCE_COOLDOWN_WINDOW).includes(kana);
+  }
 
   function applyKanaFont(){
     const serifOn = state.kanaFont === "serif";
@@ -357,7 +378,26 @@ import { loadJson, saveJson } from "./storage.js";
       state.idx = 0;
     }
 
-    state.current = state.deck[state.idx++];
+    // Sentence cooldown: avoid showing sentences that were displayed very recently.
+    // We scan forward through the deck (wrapping if needed) to find a non-cooldown sentence.
+    let candidate = null;
+    const maxScan = Math.max(1, state.deck.length);
+    for (let tries = 0; tries < maxScan; tries++){
+      if (state.idx >= state.deck.length){
+        state.deck = shuffle(state.deck);
+        state.idx = 0;
+      }
+
+      const c = state.deck[state.idx++];
+      if (c?.type === "sentence" && isSentenceInCooldown(c.kana)){
+        continue;
+      }
+      candidate = c;
+      break;
+    }
+    state.current = candidate || state.deck[Math.max(0, Math.min(state.idx - 1, state.deck.length - 1))];
+
+    if (state.current?.type === "sentence") rememberRecentSentence(state.current.kana);
     els.prompt.textContent = state.current.kana;
     els.answer.value = "";
     els.answer.focus();

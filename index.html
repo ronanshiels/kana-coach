@@ -24,26 +24,25 @@
     <div class="topbar">
       <!-- Logo -->
       <div class="brand" aria-label="Kana Coach">
-        <svg class="brandLogo" viewBox="0 0 260 40" role="img" aria-label="Kana Coach">
+        <svg class="brandLogo" viewBox="0 0 240 40" role="img" aria-label="Kana Coach">
           <text x="0" y="28"
                 font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
                 font-size="28"
                 font-weight="850"
-                letter-spacing="0.2"
-                fill="currentColor">Kana</text>
-
-          <text x="92" y="29"
-                font-family="Hiragino Mincho ProN, Yu Mincho, Noto Serif JP, ui-serif, Georgia, serif"
-                font-size="28"
-                font-weight="700"
-                fill="var(--accent)">あ</text>
-
-          <text x="124" y="28"
-                font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
-                font-size="28"
-                font-weight="500"
-                letter-spacing="0.4"
-                fill="currentColor">Coach</text>
+                fill="currentColor">Kana
+            <tspan dx="6"
+                   dy="1"
+                   font-family="Hiragino Mincho ProN, Yu Mincho, Noto Serif JP, ui-serif, Georgia, serif"
+                   font-size="28"
+                   font-weight="700"
+                   fill="var(--accent)">あ</tspan>
+            <tspan dx="6"
+                   dy="-1"
+                   font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                   font-size="28"
+                   font-weight="500"
+                   fill="currentColor">Coach</tspan>
+          </text>
         </svg>
       </div>
 
@@ -53,7 +52,7 @@
         <!-- Settings cog as SVG for true centering -->
         <button class="icon" id="menuBtn" aria-label="Open settings">
           <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path fill="currentColor" d="M19.14,12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.4.12-.61l-1.92-3.32c-.11-.21-.36-.3-.58-.22l-2.39.96c-.5-.38-1.04-.7-1.64-.94l-.36-2.54c-.03-.23-.23-.4-.47-.4h-3.84c-.24,0-.44.17-.47.4l-.36,2.54c-.6.24-1.15.56-1.64.94l-2.39-.96c-.22-.09-.47.01-.58.22l-1.92,3.32c-.11.21-.06.47.12.61l2.03,1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03,1.58c-.18.14-.23.4-.12.61l1.92,3.32c.11.21.36.3.58.22l2.39-.96c.5.38,1.04.7,1.64.94l.36,2.54c.03.23.23.4.47.4h3.84c.24,0 .44-.17.47-.4l.36-2.54c.6-.24,1.15-.56,1.64-.94l2.39.96c.22.09.47-.01.58-.22l1.92-3.32c.11-.21.06-.47-.12-.61l-2.03-1.58ZM12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/>
+            <path fill="currentColor" d="M19.14,12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.4.12-.61l-1.92-3.32c-.11-.21-.36-.3-.58-.22l-2.39.96c-.5-.38-1.04-.7-1.64-.94l-.36-2.54c-.03-.23-.23-.4-.47-.4h-3.84c-.24,0-.44.17-.47.4l-.36,2.54c-.6.24-1.15.56-1.64.94l-2.39-.96c-.22-.09-.47.01-.58.22l-1.92,3.32c-.11.21-.06.47.12.61l2.03,1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03,1.58c-.18.14-.23.4-.12.61l1.92,3.32c.11.21.36.3.58.22l2.39-.96c.5.38,1.04.7,1.64.94l.36,2.54c.03-.23.23-.4.47-.4h3.84c.24,0 .44.17.47.4l.36-2.54c.6-.24,1.15-.56,1.64-.94l2.39.96c.22.09.47-.01.58-.22l1.92-3.32c.11-.21.06-.47-.12-.61l-2.03-1.58ZM12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/>
           </svg>
         </button>
       </div>
@@ -70,12 +69,7 @@
         </div>
       </div>
 
-      <!-- 2) Answer / definition container -->
-      <div class="result" id="result">
-        <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
-      </div>
-
-      <!-- 3) Input container -->
+      <!-- 2) Input container -->
       <div class="card answerCard">
         <div class="answerInner">
           <input id="answer" type="text" placeholder="Type romaji…" autocomplete="off" spellcheck="false" />
@@ -85,6 +79,11 @@
             <button id="nextBtn">Next</button>
           </div>
         </div>
+      </div>
+
+      <!-- 3) Answer / definition container -->
+      <div class="result" id="result">
+        <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
       </div>
 
     </div>

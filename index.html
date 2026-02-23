@@ -1,54 +1,188 @@
-Kana Coach
-?
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Kana Coach</title>
 
-—
-—
-—
-Press Enter to check. Press Enter again for next.
-Check Reveal Next
-Streak
-0
-Mode: Normal
-Accuracy
-—
-0 attempts
-Trouble kana
-0
-characters flagged
-Practice: — Script: — Level: —
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="assets/icons/jp-flag.svg">
 
-Settings
-Practice mode
-Mode
-        Normal (mix of characters/words/sentences)
-        Trouble kana (characters you miss most)
-        Recent trouble kana (quick redo)
-      
-Trouble kana is calculated across all words/sentences too — the same character missed in different contexts is counted together.
-Reset session stats
-Reset learning history
-What to practise
-Include characters Include words (kana-only) Include short sentences (kana-only) Lenient checking (common romanisation variants) Mark close-but-not-standard as “Almost”
-Script
-        Hiragana + Katakana
-        Hiragana only
-        Katakana only
-      
-Level
-        Easy
-        Standard
-        Spicy
-      
-Keyboard: Enter check/next • Shift+Enter reveal • Esc next
-Appearance
-Use Mincho-style kana font (serif)
-Switches the large kana prompt between a rounded system style and a Japanese serif (Mincho-like) style.
+  <meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Kana Coach">
 
-Welcome to Kana Coach
+  <link rel="stylesheet" href="assets/css/styles.css" />
+</head>
 
-You’ll see kana (no kanji). Type the romaji and press Enter. Press Enter again to move on.
-	•	Spaces don’t matter (watashi wa = watashiwa).
-	•	Almost appears for common “close” spellings (e.g. cya for cha, or ha when は is the particle wa).
-	•	wo / o are both accepted when を is used as the object particle (standard is usually o).
-	•	Trouble kana tracks characters you miss most — even when they appear inside different words/sentences.
-	•	Your progress is saved locally on this device/browser.
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <!-- Simple title -->
+      <div class="brand" aria-label="Kana Coach">Kana Coach</div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <button class="icon" id="helpBtn" aria-label="Help"><span class="iconGlyph">?</span></button>
+
+        <!-- Settings cog as SVG for true centering -->
+        <button class="icon" id="menuBtn" aria-label="Open settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path fill="currentColor" d="M19.14,12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.4.12-.61l-1.92-3.32c-.11-.21-.36-.3-.58-.22l-2.39.96c-.5-.38-1.04-.7-1.64-.94l-.36-2.54c-.03-.23-.23-.4-.47-.4h-3.84c-.24,0-.44.17-.47.4l-.36,2.54c-.6.24-1.15.56-1.64.94l-2.39-.96c-.22-.09-.47.01-.58.22l-1.92,3.32c-.11.21-.06.47.12.61l2.03,1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03,1.58c-.18.14-.23.4-.12.61l1.92,3.32c.11.21.36.3.58.22l2.39-.96c.5.38,1.04.7,1.64.94l.36,2.54c.03.23.23.4.47.4h3.84c.24,0 .44-.17.47-.4l.36-2.54c.6-.24,1.15-.56,1.64-.94l2.39.96c.22.09.47-.01.58-.22l1.92-3.32c.11-.21.06-.47-.12-.61l-2.03-1.58ZM12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="stack">
+
+      <!-- 1) Prompt container -->
+      <div class="card promptCard">
+        <div class="bigPrompt" id="prompt">—</div>
+        <div class="promptMeta">
+          <div id="typeMeta">—</div>
+          <div id="indexMeta">—</div>
+        </div>
+      </div>
+
+      <!-- 2) Answer / definition container -->
+      <div class="result" id="result">
+        <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
+      </div>
+
+      <!-- 3) Input container -->
+      <div class="card answerCard">
+        <div class="answerInner">
+          <input id="answer" type="text" placeholder="Type romaji…" autocomplete="off" spellcheck="false" />
+          <div class="btns">
+            <button class="primary" id="checkBtn">Check</button>
+            <button class="ghost" id="revealBtn">Reveal</button>
+            <button id="nextBtn">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="statCard">
+        <p class="statLabel">Streak</p>
+        <p class="statValue" id="streakValue">0</p>
+        <p class="statSub" id="modeTiny">Mode: —</p>
+      </div>
+
+      <div class="statCard">
+        <p class="statLabel">Accuracy</p>
+        <p class="statValue"><span id="accValue">0</span><span class="statUnit">%</span></p>
+        <p class="statSub"><span id="correctValue">0</span> correct • <span id="totalValue">0</span> total</p>
+      </div>
+
+      <div class="statCard">
+        <p class="statLabel">Trouble kana</p>
+        <p class="statValue" id="troubleValue">—</p>
+        <p class="statSub" id="troubleSub">Most missed characters</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings drawer -->
+  <div class="overlay" id="overlay"></div>
+  <aside class="drawer" id="drawer" aria-label="Settings">
+    <div class="drawerHeader">
+      <h2>Settings</h2>
+      <button class="icon" id="closeDrawerBtn" aria-label="Close settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawerSection">
+      <h2>Training mode</h2>
+      <label for="modeSelect" style="display:block;margin:12px 0 6px">Select</label>
+      <select id="modeSelect">
+        <option value="balanced" selected>Balanced</option>
+        <option value="review">Review trouble kana</option>
+        <option value="new">New kana focus</option>
+      </select>
+
+      <div class="hintBox" id="modeHint">
+        Trouble kana is calculated across all words/sentences too — the same character missed in different contexts is counted together.
+      </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+        <button id="resetSessionBtn">Reset session stats</button>
+        <button id="resetHistoryBtn">Reset learning history</button>
+      </div>
+    </div>
+
+    <div class="drawerSection">
+      <h2>What to practise</h2>
+      <label><input type="checkbox" id="mixChars" checked /> Include characters</label>
+      <label><input type="checkbox" id="mixWords" checked /> Include words (kana-only)</label>
+      <label><input type="checkbox" id="mixSentences" checked /> Include short sentences (kana-only)</label>
+
+      <label><input type="checkbox" id="allowLenient" checked /> Lenient checking (common romanisation variants)</label>
+      <label><input type="checkbox" id="allowAlmost" checked /> Mark close-but-not-standard as “Almost”</label>
+
+      <label for="scriptSelect" style="display:block;margin:12px 0 6px">Script</label>
+      <select id="scriptSelect">
+        <option value="both" selected>Hiragana + Katakana</option>
+        <option value="hira">Hiragana only</option>
+        <option value="kata">Katakana only</option>
+      </select>
+
+      <label for="difficultySelect" style="display:block;margin:12px 0 6px">Level</label>
+      <select id="difficultySelect">
+        <option value="easy">Easy</option>
+        <option value="standard" selected>Standard</option>
+        <option value="spicy">Spicy</option>
+      </select>
+
+      <div class="hintBox">
+        Keyboard: <span class="kbd">Enter</span> check/next • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> reveal • <span class="kbd">Esc</span> next
+      </div>
+    </div>
+
+    <!-- Appearance -->
+    <div class="drawerSection">
+      <h2>Appearance</h2>
+      <label>
+        <input type="checkbox" id="kanaFontSerif" />
+        Use Mincho-style kana font (serif)
+      </label>
+      <div class="hintBox">
+        Switches the large kana prompt between a rounded system style and a Japanese serif (Mincho-like) style.
+      </div>
+    </div>
+  </aside>
+
+  <!-- Tutorial / Help modal -->
+  <div class="modalOverlay" id="helpOverlay"></div>
+  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-label="Welcome">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <h3 style="margin:0">Welcome to Kana Coach</h3>
+      <button class="icon" id="closeHelpBtn" aria-label="Close help">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/>
+        </svg>
+      </button>
+    </div>
+
+    <p class="mini" style="margin-top:10px">
+      You’ll see kana (no kanji). Type the <span class="mono">romaji</span> and press <span class="kbd">Enter</span>.
+      Press <span class="kbd">Enter</span> again to move on.
+    </p>
+
+    <ul>
+      <li><b>Spaces don’t matter</b> (<span class="mono">watashi wa</span> = <span class="mono">watashiwa</span>).</li>
+      <li><b>Almost</b> appears for common “close” spellings (e.g. <span class="mono">cya</span> for <span class="mono">cha</span>, or <span class="mono">ha</span> when <span class="mono">は</span> is the particle <span class="mono">wa</span>).</li>
+      <li><b>wo / o</b> are both accepted when <span class="mono">を</span> is used as the object particle (standard is usually <span class="mono">o</span>).</li>
+      <li><b>Trouble kana</b> tracks characters you miss most — even when they appear inside different words/sentences.</li>
+      <li>Your progress is saved <b>locally on this device/browser</b>.</li>
+    </ul>
+  </div>
+
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

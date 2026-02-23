@@ -24,7 +24,7 @@ export const SENTENCE_CATEGORIES = [
 ];
 
 /* -----------------------------
-   WORDS (1,200)
+   WORDS (curated practical list)
    ----------------------------- */
 
 const BASE_WORD_BANK = [
@@ -88,6 +88,22 @@ const BASE_WORD_BANK = [
   { kana: "キャンセル", romaji: "kyanseru", meaning: "Cancel / cancellation", diff: "spicy" },
   { kana: "アレルギー", romaji: "arerugii", meaning: "Allergy", diff: "spicy" },
   { kana: "ヴィーガン", romaji: "viigan", meaning: "Vegan", diff: "spicy" },
+
+  { kana: "もしもし", romaji: "moshi moshi", meaning: "Hello (on the phone)", diff: "easy" },
+  { kana: "よろしく", romaji: "yoroshiku", meaning: "Nice to meet you / thanks in advance (casual)", diff: "standard" },
+  { kana: "だいじょうぶ", romaji: "daijoubu", meaning: "Okay / all right", diff: "easy" },
+  { kana: "ちょっと", romaji: "chotto", meaning: "A little / a bit", diff: "easy" },
+  { kana: "もういちど", romaji: "mou ichido", meaning: "One more time", diff: "standard" },
+  { kana: "ゆっくり", romaji: "yukkuri", meaning: "Slowly", diff: "standard" },
+  { kana: "はやく", romaji: "hayaku", meaning: "Quickly / early", diff: "standard" },
+  { kana: "いまから", romaji: "ima kara", meaning: "From now", diff: "standard" },
+  { kana: "きょう", romaji: "kyou", meaning: "Today", diff: "standard" },
+  { kana: "あした", romaji: "ashita", meaning: "Tomorrow", diff: "standard" },
+  { kana: "きのう", romaji: "kinou", meaning: "Yesterday", diff: "standard" },
+  { kana: "まいにち", romaji: "mainichi", meaning: "Every day", diff: "standard" },
+  { kana: "すこし", romaji: "sukoshi", meaning: "A little", diff: "easy" },
+  { kana: "たくさん", romaji: "takusan", meaning: "A lot / many", diff: "standard" },
+  { kana: "だめ", romaji: "dame", meaning: "No good / not allowed", diff: "standard" },
 ];
 
 const NOUNS = [
@@ -122,6 +138,68 @@ const NOUNS = [
   { kana: "ナビゲーション", romaji: "nabigeeshon", meaning: "Navigation", diff: "spicy" },
   { kana: "トランスファー", romaji: "toransufaa", meaning: "Transfer", diff: "spicy" },
   { kana: "プラットフォーム", romaji: "puratto foomu", meaning: "Platform (train)", diff: "spicy" },
+
+  { kana: "まち", romaji: "machi", meaning: "Town / city", diff: "easy" },
+  { kana: "みち", romaji: "michi", meaning: "Road / way", diff: "easy" },
+  { kana: "こうさてん", romaji: "kousaten", meaning: "Intersection", diff: "spicy" },
+  { kana: "しんごう", romaji: "shingou", meaning: "Traffic light", diff: "spicy" },
+  { kana: "はし", romaji: "hashi", meaning: "Bridge", diff: "standard" },
+  { kana: "かわ", romaji: "kawa", meaning: "River", diff: "standard" },
+  { kana: "うみ", romaji: "umi", meaning: "Sea", diff: "standard" },
+  { kana: "やま", romaji: "yama", meaning: "Mountain", diff: "standard" },
+  { kana: "てら", romaji: "tera", meaning: "Temple", diff: "standard" },
+  { kana: "じんじゃ", romaji: "jinja", meaning: "Shrine", diff: "standard" },
+  { kana: "はくぶつかん", romaji: "hakubutsukan", meaning: "Museum", diff: "spicy" },
+  { kana: "びじゅつかん", romaji: "bijutsukan", meaning: "Art museum", diff: "spicy" },
+  { kana: "えきまえ", romaji: "ekimae", meaning: "In front of the station", diff: "spicy" },
+  { kana: "ちかてつ", romaji: "chikatetsu", meaning: "Subway", diff: "standard" },
+  { kana: "しんかんせん", romaji: "shinkansen", meaning: "Bullet train", diff: "spicy" },
+  { kana: "のりば", romaji: "noriba", meaning: "Platform / boarding area", diff: "spicy" },
+  { kana: "かいさつ", romaji: "kaisatsu", meaning: "Ticket gate", diff: "spicy" },
+  { kana: "ひこうき", romaji: "hikouki", meaning: "Airplane", diff: "standard" },
+  { kana: "せき", romaji: "seki", meaning: "Seat", diff: "standard" },
+  { kana: "にもつ", romaji: "nimotsu", meaning: "Luggage", diff: "standard" },
+  { kana: "さいふ", romaji: "saifu", meaning: "Wallet", diff: "standard" },
+  { kana: "かぎ", romaji: "kagi", meaning: "Key", diff: "standard" },
+  { kana: "よやく", romaji: "yoyaku", meaning: "Reservation", diff: "spicy" },
+  { kana: "よてい", romaji: "yotei", meaning: "Plan / schedule", diff: "spicy" },
+  { kana: "じかんひょう", romaji: "jikanhyou", meaning: "Timetable", diff: "spicy" },
+  { kana: "きっさてん", romaji: "kissaten", meaning: "Cafe (traditional)", diff: "standard" },
+  { kana: "みせ", romaji: "mise", meaning: "Shop / store", diff: "easy" },
+  { kana: "スーパー", romaji: "suupaa", meaning: "Supermarket", diff: "standard" },
+  { kana: "やくきょく", romaji: "yakkyoku", meaning: "Pharmacy", diff: "spicy" },
+  { kana: "びょういん", romaji: "byouin", meaning: "Hospital", diff: "spicy" },
+  { kana: "こうばん", romaji: "kouban", meaning: "Police box", diff: "spicy" },
+  { kana: "けいさつ", romaji: "keisatsu", meaning: "Police", diff: "spicy" },
+  { kana: "えいご", romaji: "eigo", meaning: "English", diff: "easy" },
+  { kana: "にほんご", romaji: "nihongo", meaning: "Japanese (language)", diff: "easy" },
+  { kana: "ちゅうもん", romaji: "chuumon", meaning: "Order", diff: "spicy" },
+  { kana: "おかいけい", romaji: "okaikei", meaning: "Bill / check", diff: "standard" },
+  { kana: "れしーと", romaji: "reshiito", meaning: "Receipt", diff: "standard" },
+  { kana: "げんきん", romaji: "genkin", meaning: "Cash", diff: "spicy" },
+  { kana: "こうか", romaji: "kouka", meaning: "Coin", diff: "spicy" },
+  { kana: "さつ", romaji: "satsu", meaning: "Bill / note (banknote)", diff: "spicy" },
+  { kana: "えん", romaji: "en", meaning: "Yen", diff: "standard" },
+  { kana: "びょうき", romaji: "byouki", meaning: "Illness", diff: "spicy" },
+  { kana: "くすり", romaji: "kusuri", meaning: "Medicine", diff: "standard" },
+  { kana: "あぶら", romaji: "abura", meaning: "Oil", diff: "spicy" },
+  { kana: "しお", romaji: "shio", meaning: "Salt", diff: "standard" },
+  { kana: "さとう", romaji: "satou", meaning: "Sugar", diff: "standard" },
+  { kana: "こしょう", romaji: "koshou", meaning: "Pepper", diff: "spicy" },
+  { kana: "にほんしゅ", romaji: "nihonshu", meaning: "Sake", diff: "spicy" },
+  { kana: "のみもの", romaji: "nomimono", meaning: "Drink (beverage)", diff: "standard" },
+  { kana: "たべもの", romaji: "tabemono", meaning: "Food", diff: "standard" },
+  { kana: "あさごはん", romaji: "asa gohan", meaning: "Breakfast", diff: "standard" },
+  { kana: "ひるごはん", romaji: "hiru gohan", meaning: "Lunch", diff: "standard" },
+  { kana: "ばんごはん", romaji: "ban gohan", meaning: "Dinner", diff: "standard" },
+  { kana: "でざーと", romaji: "dezaato", meaning: "Dessert", diff: "spicy" },
+  { kana: "ぎゅうにゅう", romaji: "gyuunyuu", meaning: "Milk", diff: "spicy" },
+  { kana: "さかな", romaji: "sakana", meaning: "Fish", diff: "standard" },
+  { kana: "とりにく", romaji: "toriniku", meaning: "Chicken", diff: "spicy" },
+  { kana: "ぶたにく", romaji: "butaniku", meaning: "Pork", diff: "spicy" },
+  { kana: "ぎゅうにく", romaji: "gyuuniku", meaning: "Beef", diff: "spicy" },
+  { kana: "やきとり", romaji: "yakitori", meaning: "Grilled chicken skewers", diff: "spicy" },
+  { kana: "おちゃづけ", romaji: "ochazuke", meaning: "Rice with tea", diff: "spicy" },
 ];
 
 const ADJECTIVES = [
@@ -135,6 +213,21 @@ const ADJECTIVES = [
   { kana: "やすい", romaji: "yasui", meaning: "Cheap", diff: "standard" },
   { kana: "むずかしい", romaji: "muzukashii", meaning: "Difficult", diff: "spicy" },
   { kana: "かんたん", romaji: "kantan", meaning: "Easy / simple", diff: "standard" },
+
+  { kana: "あつい", romaji: "atsui", meaning: "Hot", diff: "standard" },
+  { kana: "つめたい", romaji: "tsumetai", meaning: "Cold (to the touch)", diff: "spicy" },
+  { kana: "あたたかい", romaji: "atatakai", meaning: "Warm", diff: "spicy" },
+  { kana: "おいしい", romaji: "oishii", meaning: "Delicious", diff: "standard" },
+  { kana: "まずい", romaji: "mazui", meaning: "Not tasty", diff: "spicy" },
+  { kana: "からい", romaji: "karai", meaning: "Spicy", diff: "standard" },
+  { kana: "あまい", romaji: "amai", meaning: "Sweet", diff: "standard" },
+  { kana: "すっぱい", romaji: "suppai", meaning: "Sour", diff: "spicy" },
+  { kana: "しょっぱい", romaji: "shoppai", meaning: "Salty", diff: "spicy" },
+  { kana: "やさしい", romaji: "yasashii", meaning: "Kind / gentle", diff: "standard" },
+  { kana: "こわい", romaji: "kowai", meaning: "Scary", diff: "standard" },
+  { kana: "きれい", romaji: "kirei", meaning: "Pretty / clean", diff: "standard" },
+  { kana: "しずか", romaji: "shizuka", meaning: "Quiet", diff: "standard" },
+  { kana: "にぎやか", romaji: "nigiyaka", meaning: "Lively", diff: "spicy" },
 ];
 
 const VERB_PHRASES = [
@@ -145,6 +238,25 @@ const VERB_PHRASES = [
   { kana: "みたい", romaji: "mitai", meaning: "Want to see", diff: "standard" },
   { kana: "たすけてください", romaji: "tasukete kudasai", meaning: "Please help", diff: "spicy" },
   { kana: "よやくしたい", romaji: "yoyaku shitai", meaning: "Want to book / reserve", diff: "spicy" },
+
+  { kana: "いく", romaji: "iku", meaning: "To go", diff: "easy" },
+  { kana: "くる", romaji: "kuru", meaning: "To come", diff: "easy" },
+  { kana: "かえる", romaji: "kaeru", meaning: "To return / go home", diff: "standard" },
+  { kana: "あるく", romaji: "aruku", meaning: "To walk", diff: "standard" },
+  { kana: "のる", romaji: "noru", meaning: "To ride / get on", diff: "standard" },
+  { kana: "おりる", romaji: "oriru", meaning: "To get off", diff: "standard" },
+  { kana: "たべる", romaji: "taberu", meaning: "To eat", diff: "easy" },
+  { kana: "のむ", romaji: "nomu", meaning: "To drink", diff: "easy" },
+  { kana: "かう", romaji: "kau", meaning: "To buy", diff: "easy" },
+  { kana: "みる", romaji: "miru", meaning: "To see / watch", diff: "easy" },
+  { kana: "きく", romaji: "kiku", meaning: "To ask / listen", diff: "standard" },
+  { kana: "はなす", romaji: "hanasu", meaning: "To speak", diff: "standard" },
+  { kana: "いう", romaji: "iu", meaning: "To say", diff: "standard" },
+  { kana: "まつ", romaji: "matsu", meaning: "To wait", diff: "standard" },
+  { kana: "わかる", romaji: "wakaru", meaning: "To understand", diff: "standard" },
+  { kana: "しる", romaji: "shiru", meaning: "To know", diff: "spicy" },
+  { kana: "しぬ", romaji: "shinu", meaning: "To die", diff: "spicy" },
+  { kana: "たすける", romaji: "tasukeru", meaning: "To help", diff: "spicy" },
 ];
 
 const KATA_LOANWORDS = [
@@ -158,6 +270,14 @@ const KATA_LOANWORDS = [
   { kana: "パスポートケース", romaji: "pasupooto keesu", meaning: "Passport case", diff: "spicy" },
   { kana: "オンライン", romaji: "onrain", meaning: "Online", diff: "spicy" },
   { kana: "オフライン", romaji: "ofurain", meaning: "Offline", diff: "spicy" },
+
+  { kana: "スーツケース", romaji: "suutsukeesu", meaning: "Suitcase", diff: "standard" },
+  { kana: "マップ", romaji: "mappu", meaning: "Map (loanword)", diff: "standard" },
+  { kana: "トイレットペーパー", romaji: "toiretto peepaa", meaning: "Toilet paper", diff: "spicy" },
+  { kana: "クーポン", romaji: "kuupon", meaning: "Coupon", diff: "spicy" },
+  { kana: "レジ", romaji: "reji", meaning: "Cash register / checkout", diff: "standard" },
+  { kana: "エキチカ", romaji: "ekichika", meaning: "Near the station", diff: "spicy" },
+  { kana: "チュウシャジョウ", romaji: "chuushajou", meaning: "Parking lot (often written in kana here)", diff: "spicy" },
 ];
 
 function uniqByKana(rows){
@@ -173,62 +293,14 @@ function uniqByKana(rows){
 }
 
 function buildWordRows1200(){
+  // Curated words only (no synthetic combinations like "noun of noun")
   const rows = [];
-
-  // Seed with curated bases
   rows.push(...BASE_WORD_BANK);
   rows.push(...NOUNS);
   rows.push(...ADJECTIVES);
   rows.push(...VERB_PHRASES);
   rows.push(...KATA_LOANWORDS);
-
-  // adjective + noun
-  for (const a of ADJECTIVES){
-    for (const n of NOUNS){
-      const kana = `${a.kana}${n.kana}`;
-      const romaji = `${a.romaji} ${n.romaji}`;
-      const meaning = `${a.meaning} ${n.meaning}`.trim();
-      const diff = (DIFF_RANK[a.diff] > DIFF_RANK[n.diff]) ? a.diff : n.diff;
-      rows.push({ kana, romaji, meaning, diff });
-    }
-  }
-
-  // noun + の + noun
-  for (const a of NOUNS){
-    for (const b of NOUNS){
-      if (a.kana === b.kana) continue;
-      const kana = `${a.kana}の${b.kana}`;
-      const romaji = `${a.romaji} no ${b.romaji}`;
-      const meaning = `${a.meaning} of ${b.meaning}`;
-      const diff = (DIFF_RANK[a.diff] > DIFF_RANK[b.diff]) ? a.diff : b.diff;
-      rows.push({ kana, romaji, meaning, diff });
-    }
-  }
-
-  // number-like + noun (simple)
-  const COUNTS = [
-    { kana:"ひとつ", romaji:"hitotsu", meaning:"one", diff:"easy" },
-    { kana:"ふたつ", romaji:"futatsu", meaning:"two", diff:"easy" },
-    { kana:"みっつ", romaji:"mittsu", meaning:"three", diff:"standard" },
-    { kana:"よっつ", romaji:"yottsu", meaning:"four", diff:"standard" },
-  ];
-  for (const c of COUNTS){
-    for (const n of NOUNS){
-      const kana = `${n.kana}${c.kana}`;
-      const romaji = `${n.romaji} ${c.romaji}`;
-      const meaning = `${c.meaning} ${n.meaning}`;
-      const diff = (DIFF_RANK[c.diff] > DIFF_RANK[n.diff]) ? c.diff : n.diff;
-      rows.push({ kana, romaji, meaning, diff });
-    }
-  }
-
-  // Trim / dedupe
-  const unique = uniqByKana(rows);
-
-  // If still short, pad with repeats of curated base (shouldn't happen)
-  while (unique.length < 1200) unique.push(unique[unique.length % unique.length]);
-
-  return unique.slice(0, 1200);
+  return uniqByKana(rows);
 }
 
 const WORD_ROWS_1200 = buildWordRows1200();
@@ -504,7 +576,6 @@ export const SENT_ITEMS = [
   { type: "sentence", kana: "ここにいかないでください", accepted: ["koko ni ikanaide kudasai"], meaning: "Please don’t go here.", difficulty: "spicy", category: "emergencies", script: "hira" },
   { type: "sentence", kana: "さわらないでください", accepted: ["sawaranaide kudasai"], meaning: "Please don’t touch.", difficulty: "standard", category: "emergencies", script: "hira" },
   { type: "sentence", kana: "たちいりきんしですか", accepted: ["tachiiri kinshi desu ka"], meaning: "Is entry prohibited?", difficulty: "spicy", category: "emergencies", script: "hira" },
-  { type: "sentence", kana: "みずをください", accepted: ["mizu o kudasai"], meaning: "Water, please.", difficulty: "easy", category: "emergencies", script: "hira" },
   { type: "sentence", kana: "しんこきゅうしましょう", accepted: ["shinkokyuu shimashou"], meaning: "Let’s take a deep breath.", difficulty: "spicy", category: "emergencies", script: "hira" },
 ];
 

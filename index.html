@@ -113,7 +113,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.7</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>
@@ -191,8 +191,7 @@
       <label><input type="checkbox" id="allowAlmost" checked /> Mark close-but-not-standard as “Almost”</label>
 
       <div class="hintBox">
-        Notes: spaces don’t matter (<span class="mono">watashi wa</span> = <span class="mono">watashiwa</span>). For particles, you’ll often see <span class="mono">は</span> read as <span class="mono">wa</span>, and <span class="mono">を</span> commonly written as <span class="mono">o</span> (though <span class="mono">wo</span> exists too).
-      </div>
+        Notes: spacing matters for multi‑word phrases. In <b>Easy</b> and <b>Standard</b>, missing/extra spaces will be marked as <b>Almost</b>. In <b>Spicy</b>, spacing must be exact. For particles, you’ll often see <span class="mono">は</span> read as <span class="mono">wa</span>, and <span class="mono">を</span> commonly written as <span class="mono">o</span> (though <span class="mono">wo</span> exists too).</div>
 
       <div class="hintBox">
         Keyboard: <span class="kbd">Enter</span> check/next • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> reveal • <span class="kbd">Esc</span> next
@@ -208,6 +207,14 @@
       </label>
       <div class="hintBox">
         Switches the large kana prompt between a rounded system style and a Japanese serif (Mincho-like) style.
+      </div>
+
+      <label style="margin-top:12px">
+        <input type="checkbox" id="showSpaces" />
+        Show spaces between words
+      </label>
+      <div class="hintBox">
+        Adds clear spacing to multi‑word words/sentences to make them easier to parse. This doesn’t change what kana you see — it only adds word breaks.
       </div>
     </div>
   </aside>
@@ -233,7 +240,7 @@
       <div class="helpSection">
         <h4>How answers are checked</h4>
         <ul>
-          <li><b>Spaces don’t matter</b> (<span class="mono">watashi wa</span> = <span class="mono">watashiwa</span>).</li>
+          <li><b>Spacing matters</b> for multi‑word phrases. In <b>Easy</b> and <b>Standard</b>, spacing issues are marked as <b>Almost</b>. In <b>Spicy</b>, spacing must be exact.</li>
           <li><b>Lenient checking</b> accepts common variants (e.g. <span class="mono">shi/si</span>, <span class="mono">chi/ti</span>, etc.).</li>
           <li><b>Almost</b> appears when your input is close-but-not-standard (you’ll see exactly what differed).</li>
           <li>Note: some particles differ from “spelling”: <span class="mono">は</span> is often read <span class="mono">wa</span>, and <span class="mono">を</span> is commonly written <span class="mono">o</span> (though <span class="mono">wo</span> exists too).</li>

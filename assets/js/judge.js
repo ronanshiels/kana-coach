@@ -8,6 +8,11 @@ const clean = (s) => (s ?? "")
     .replace(/[-_]/g, " ")
     .replace(/\s+/g, " ");
 const stripSpaces = (s) => s.replace(/\s+/g, "");
+const spacingMismatch = (userRaw, expectedRaw) => {
+  const u = clean(userRaw);
+  const e = clean(expectedRaw);
+  return u !== e && stripSpaces(u) === stripSpaces(e);
+};
 function expandLenientEquivalents(str){
     const base = stripSpaces(clean(str));
     const set = new Set([base]);
@@ -67,8 +72,8 @@ function escapeHtml(s){
 
 /* --- Diff helpers (for bolding mistakes + specific Almost feedback) --- */
 function highlightUserDiffHtml(userRaw, expectedRaw){
-    const u = stripSpaces(clean(userRaw));
-    const e = stripSpaces(clean(expectedRaw));
+    const u = clean(userRaw);
+    const e = clean(expectedRaw);
     const max = Math.max(u.length, e.length);
     let html = "";
     for (let i=0;i<max;i++){
@@ -82,8 +87,8 @@ function highlightUserDiffHtml(userRaw, expectedRaw){
   }
 
 function highlightExpectedDiffHtml(userRaw, expectedRaw){
-    const u = stripSpaces(clean(userRaw));
-    const e = stripSpaces(clean(expectedRaw));
+    const u = clean(userRaw);
+    const e = clean(expectedRaw);
     const max = Math.max(u.length, e.length);
     let html = "";
     for (let i=0;i<max;i++){
@@ -97,8 +102,8 @@ function highlightExpectedDiffHtml(userRaw, expectedRaw){
   }
 
 function describeDiff(userRaw, expectedRaw){
-    const u = stripSpaces(clean(userRaw));
-    const e = stripSpaces(clean(expectedRaw));
+    const u = clean(userRaw);
+    const e = clean(expectedRaw);
     if (!u || !e) return "";
 
     const diffs = [];
@@ -202,29 +207,78 @@ function isCorrectDetailed(userInput, acceptedList, settings, itemKana){
     accepted = addWoParticleVariants(accepted, itemKana);
 
     const primary = accepted[0] ?? "";
-    const user = stripSpaces(clean(userInput));
-    if (!user) return { verdict:"bad", primary, accepted, reason:"No answer entered." };
 
-    const primaryNorm = stripSpaces(clean(primary));
-    if (user === primaryNorm) return { verdict:"good", primary, accepted };
+    const userKeep = clean(userInput);
+    if (!userKeep) return { verdict:"bad", primary, accepted, reason:"No answer entered." };
+
+    // 1) Exact match WITH spaces
+    const primaryKeep = clean(primary);
+    if (userKeep === primaryKeep) return { verdict:"good", primary, accepted };
 
     for (let i=1;i<accepted.length;i++){
-      const a = stripSpaces(clean(accepted[i]));
-      if (user === a) {
+      const aKeep = clean(accepted[i]);
+      if (userKeep === aKeep){
+        // Exact alternate spelling with exact spacing
         if (settings.allowAlmost) {
           return {
             verdict:"almost",
             primary,
             accepted,
-            reason: `You entered an accepted alternate spelling (“${stripSpaces(clean(accepted[i]))}”), but the standard we’re aiming for is “${primaryNorm}”. ${describeDiff(userInput, primary)}`.trim()
+            reason: `You entered an accepted alternate spelling (“${aKeep}”), but the standard we’re aiming for is “${primaryKeep}”. ${describeDiff(userInput, primary)}`.trim()
           };
         }
         return { verdict:"good", primary, accepted };
       }
     }
 
+    // 2) Match ignoring spaces (for spacing-aware Almost/Bad)
+    const userNo = stripSpaces(userKeep);
+    const primaryNo = stripSpaces(primaryKeep);
+
+    if (userNo === primaryNo){
+      // Spacing-only issue
+      if ((settings.difficulty || "standard") === "spicy"){
+        return {
+          verdict:"bad",
+          primary,
+          accepted,
+          reason: `Spacing matters in Spicy. Expected “${primaryKeep}”.`
+        };
+      }
+      return {
+        verdict:"almost",
+        primary,
+        accepted,
+        reason: `Your romaji is correct, but the spacing is off. Expected “${primaryKeep}”.`
+      };
+    }
+
+    for (let i=1;i<accepted.length;i++){
+      const aKeep = clean(accepted[i]);
+      const aNo = stripSpaces(aKeep);
+      if (userNo === aNo){
+        if ((settings.difficulty || "standard") === "spicy"){
+          return {
+            verdict:"bad",
+            primary,
+            accepted,
+            reason: `Spacing matters in Spicy. Expected “${aKeep}”.`
+          };
+        }
+        return {
+          verdict:"almost",
+          primary,
+          accepted,
+          reason: `Your romaji is correct, but the spacing is off. Expected “${aKeep}”.`
+        };
+      }
+    }
+
+    // 3) Lenient/Almost rules (still ignore spaces for matching), but spacing differences
+    // are only penalised if the only difference is spacing.
     const classified = classifyMatch(userInput, primary, settings, itemKana);
     if (classified.verdict !== "bad") return { verdict: classified.verdict, primary, accepted, reason: classified.reason };
+
     return { verdict:"bad", primary, accepted };
   }
 

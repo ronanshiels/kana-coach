@@ -1,5 +1,5 @@
 // App wiring + UI events (ES module)
-import { KANA_MAP, kanaToUnits, unitsToRomaji } from "./kana-map.js";
+import { KANA_MAP, kanaToUnits, unitsToRomaji, leadingConsonant } from "./kana-map.js";
 import {
   clean,
   stripSpaces,
@@ -201,39 +201,101 @@ import { loadJson, saveJson } from "./storage.js";
     applyShowSpaces();
     // Refresh prompt display immediately
     if (state.current) {
-      els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type);
+      els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type, getPrimaryExpected(state.current));
     }
   }
 
-  function formatKanaForDisplay(kana, type){
+  function getPrimaryExpected(item){
+    if (!item) return "";
+    return (item.accepted && item.accepted[0])
+      ? item.accepted[0]
+      : unitsToRomaji(kanaToUnits(item.kana));
+  }
+
+  function formatKanaForDisplay(kana, type, expectedRomaji){
     if (!state.showSpaces) return kana;
 
     // Only add spaces for words/sentences (never split individual characters)
     if (type === "char") return kana;
 
     const GAP = " "; // single space; visual size controlled by CSS word-spacing
-    let s = (kana || "");
+    const raw = (kana || "");
 
-    // Add spaces around punctuation
-    s = s.replace(/、/g, "、" + GAP);
+    // Always add a small gap after common punctuation when Show spaces is enabled
+    const punctuated = raw
+      .replace(/、/g, "、" + GAP)
+      .replace(/。/g, "。" + GAP)
+      .replace(/！/g, "！" + GAP)
+      .replace(/？/g, "？" + GAP);
 
-    // Add spaces after common particles and phrase boundaries (longest first)
-    const rules = [
-      "おねがいします","してください","ください","でした","です","ます","ません","でしたか","ですか","ますか",
-      "から","まで","けど","ので",
-      "では","には","へは",
-      "は","を","に","で","へ","が","の","も","と","や","か","ね","よ"
-    ];
+    const expected = (expectedRomaji ?? "")
+      .toLowerCase()
+      .trim()
+      .replace(/[’']/g, "")
+      .replace(/\s+/g, " ");
 
-    for (const r of rules){
-      // Add a gap AFTER the boundary when followed by more kana/katakana
-      const reBoundary = new RegExp(r + "(?=[ぁ-ゖゔァ-ヶヴーー])","g");
-      s = s.replace(reBoundary, r + GAP);
+    const words = expected ? expected.split(" ").filter(Boolean) : [];
+
+    // If the expected romaji has no word breaks, don't introduce any (prevents false splits like わかりません → わか りません)
+    if (words.length <= 1) {
+      return punctuated.replace(/\s+/g, GAP).trim();
     }
 
-    // Normalise whitespace to our visible gap
-    s = s.replace(/\s+/g, GAP).trim();
-    return s;
+    const expectedNoSpace = words.join("");
+
+    const units = kanaToUnits(raw);
+
+    // Build cumulative romaji-length after each kana unit, using the same mapping as the judge.
+    let rom = "";
+    const cumLens = [];
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i];
+      const v = KANA_MAP.get(u);
+
+      let contrib = "";
+      if (v) {
+        if (v === "(sokuon)") {
+          const next = units[i + 1];
+          const nextRomaji = next ? (KANA_MAP.get(next) || "") : "";
+          const c = leadingConsonant(nextRomaji);
+          contrib = c ? c : "";
+        } else if (v === "(long)") {
+          const prev = rom[rom.length - 1] || "";
+          contrib = ("aeiou".includes(prev)) ? prev : "";
+        } else {
+          contrib = v;
+        }
+        rom += contrib;
+      }
+      cumLens.push(rom.length);
+    }
+
+    // If we can't confidently align romaji-to-kana, fall back to punctuation-only spacing.
+    if (rom.length !== expectedNoSpace.length) {
+      return punctuated.replace(/\s+/g, GAP).trim();
+    }
+
+    // Boundary positions in the romaji string where we should insert gaps in the kana
+    const boundaries = new Set();
+    let pos = 0;
+    for (let w = 0; w < words.length - 1; w++) {
+      pos += words[w].length;
+      boundaries.add(pos);
+    }
+
+    // Build spaced kana output: insert a gap after the kana unit that completes each romaji word.
+    let out = "";
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i];
+      out += u;
+
+      // Preserve punctuation spacing
+      if (u === "、" || u === "。" || u === "！" || u === "？") out += GAP;
+
+      if (boundaries.has(cumLens[i])) out += GAP;
+    }
+
+    return out.replace(/\s+/g, GAP).trim();
   }
 
   function getSelectedSentenceCategories(){
@@ -456,7 +518,7 @@ import { loadJson, saveJson } from "./storage.js";
     state.current = candidate || state.deck[Math.max(0, Math.min(state.idx - 1, state.deck.length - 1))];
 
     if (state.current?.type === "sentence") rememberRecentSentence(state.current.kana);
-    els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type);
+    els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type, getPrimaryExpected(state.current));
     els.answer.value = "";
     els.answer.focus();
 
@@ -704,6 +766,14 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
+    {
+      version: "v0.8.3",
+      date: "2026-02-23",
+      items: [
+        "Fixed “Show spaces between words” for sentences: spacing is now derived from the expected romaji (word boundaries) rather than particle heuristics, preventing false splits like わかりません → わか りません.",
+        "Kana display still adds a subtle gap after punctuation when Show spaces is enabled.",
+      ]
+    },
     {
       version: "v0.8.2",
       date: "2026-02-23",

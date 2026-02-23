@@ -32,10 +32,17 @@ import { loadJson, saveJson } from "./storage.js";
     const script = /[ぁ-ゖゔ]/.test(unit) ? "hira" : (/[ァ-ヶヴー]/.test(unit) ? "kata" : "other");
     return `${script}|${unit}`;
   }
+
   function ensureUnitStat(stats, key){
-    if (!stats[key]) stats[key] = { seen:0, wrong:0, last:0 };
+    // Backwards compatible: older entries may lack fields
+    if (!stats[key]) stats[key] = { seen:0, wrong:0, last:0, streak:0 };
+    if (typeof stats[key].seen !== "number") stats[key].seen = 0;
+    if (typeof stats[key].wrong !== "number") stats[key].wrong = 0;
+    if (typeof stats[key].last !== "number") stats[key].last = 0;
+    if (typeof stats[key].streak !== "number") stats[key].streak = 0; // correct streak per unit
     return stats[key];
   }
+
   function troubleScoreUnit(stat){
     const seen = stat?.seen || 0;
     const wrong = stat?.wrong || 0;
@@ -44,13 +51,14 @@ import { loadJson, saveJson } from "./storage.js";
     const volumeBoost = Math.min(1, seen / 12);
     return rate * (0.65 + 0.35 * volumeBoost);
   }
+
   function getTroubleUnitKeysFromPool(poolUnits, unitStats){
     const out = [];
     for (const u of poolUnits){
       const key = unitKey(u);
       const stat = unitStats[key];
       const score = troubleScoreUnit(stat);
-      if (score > 0) out.push({ unit:u, score, seen:stat.seen, wrong:stat.wrong });
+      if (score > 0) out.push({ unit:u, key, score, seen:stat.seen, wrong:stat.wrong });
     }
     out.sort((a,b) => b.score - a.score || b.wrong - a.wrong || b.seen - a.seen);
     return out;
@@ -70,6 +78,8 @@ import { loadJson, saveJson } from "./storage.js";
     streakValue: document.getElementById("streakValue"),
     accValue: document.getElementById("accValue"),
     troubleValue: document.getElementById("troubleValue"),
+    troubleSub: document.getElementById("troubleSub"),
+    troubleCard: document.getElementById("troubleCard"),
     modeTiny: document.getElementById("modeTiny"),
     seenTiny: document.getElementById("seenTiny"),
 
@@ -106,8 +116,14 @@ import { loadJson, saveJson } from "./storage.js";
     sentenceCatBox: document.getElementById("sentenceCatBox"),
     sentenceCatChecks: Array.from(document.querySelectorAll(".sentCat")),
 
-    // NEW: pool count line
+    // pool count line
     poolCountLine: document.getElementById("poolCountLine"),
+
+    // Trouble modal
+    troubleOverlay: document.getElementById("troubleOverlay"),
+    troubleModal: document.getElementById("troubleModal"),
+    closeTroubleBtn: document.getElementById("closeTroubleBtn"),
+    troubleList: document.getElementById("troubleList"),
   };
 
   const state = {
@@ -125,6 +141,8 @@ import { loadJson, saveJson } from "./storage.js";
     recentUnits: loadJson(LS_KEY_RECENT_UNITS, []),
 
     kanaFont: loadJson(LS_KEY_KANA_FONT, "rounded"),
+
+    troubleSubTimeout: null,
   };
 
   function applyKanaFont(){
@@ -203,9 +221,45 @@ import { loadJson, saveJson } from "./storage.js";
       : "Pool: —";
   }
 
+  function eligibleTroubleUnits(){
+    // Trouble tracking uses character units (not words/sentences), but can be triggered by misses inside any context.
+    return buildCharItems(state.settings.script, "spicy").map(x => x.kana);
+  }
+
+  function getTroubleList(){
+    const eligibleUnits = eligibleTroubleUnits();
+    return getTroubleUnitKeysFromPool(eligibleUnits, state.unitStats);
+  }
+
   function countTroubleKana(){
-    const eligibleUnits = buildCharItems(state.settings.script, "spicy").map(x => x.kana);
-    return getTroubleUnitKeysFromPool(eligibleUnits, state.unitStats).length;
+    return getTroubleList().length;
+  }
+
+  function setTroubleSubMessage(msg){
+    if (!els.troubleSub) return;
+    if (state.troubleSubTimeout) clearTimeout(state.troubleSubTimeout);
+
+    els.troubleSub.textContent = msg;
+    state.troubleSubTimeout = setTimeout(() => {
+      els.troubleSub.textContent = "characters flagged";
+      state.troubleSubTimeout = null;
+    }, 1600);
+  }
+
+  function pulseTrouble(delta){
+    if (!els.troubleCard || !els.troubleValue) return;
+
+    els.troubleCard.classList.remove("pulseAdd","pulseRemove");
+    // reflow to restart animation reliably
+    void els.troubleCard.offsetWidth;
+
+    if (delta > 0){
+      els.troubleCard.classList.add("pulseAdd");
+      setTroubleSubMessage(`+${delta} added to trouble`);
+    } else if (delta < 0){
+      els.troubleCard.classList.add("pulseRemove");
+      setTroubleSubMessage(`${Math.abs(delta)} released 🎉`);
+    }
   }
 
   function updateStatsUI(){
@@ -235,7 +289,7 @@ import { loadJson, saveJson } from "./storage.js";
       state.deck = shuffle(state.pool);
       els.modeHint.textContent = "A mix of what you’ve enabled in settings.";
     } else if (state.mode === "trouble"){
-      const allUnits = buildCharItems(state.settings.script, "spicy").map(x => x.kana);
+      const allUnits = eligibleTroubleUnits();
       const trouble = getTroubleUnitKeysFromPool(allUnits, state.unitStats);
       let deckUnits = trouble.slice(0, 60).map(t => t.unit);
 
@@ -262,7 +316,7 @@ import { loadJson, saveJson } from "./storage.js";
       };
       let deckUnits = state.recentUnits.filter(allowed).slice(0, 60);
       if (deckUnits.length < 10){
-        const allUnits = buildCharItems(state.settings.script, "spicy").map(x => x.kana);
+        const allUnits = eligibleTroubleUnits();
         deckUnits = shuffle(allUnits).slice(0, 30);
         els.modeHint.textContent = "No recent trouble kana yet — showing random kana for quick practice.";
       } else {
@@ -347,22 +401,53 @@ import { loadJson, saveJson } from "./storage.js";
     saveJson(LS_KEY_RECENT_UNITS, state.recentUnits);
   }
 
+  function removeRecentUnit(unit){
+    const before = state.recentUnits.length;
+    state.recentUnits = state.recentUnits.filter(x => x !== unit);
+    if (state.recentUnits.length !== before) saveJson(LS_KEY_RECENT_UNITS, state.recentUnits);
+  }
+
+  function resetUnitToReleaseFromTrouble(stat){
+    stat.seen = 0;
+    stat.wrong = 0;
+    stat.streak = 0;
+    stat.last = Date.now();
+  }
+
   function updateUnitStatsFromAttempt(item, userInput, verdict){
     const { seen, wrong } = attributeUnits(item.kana, userInput);
 
+    // Seen always increments
     for (const u of seen){
       const key = unitKey(u);
       const st = ensureUnitStat(state.unitStats, key);
       st.seen += 1;
       st.last = Date.now();
+
+      // Streak logic:
+      // - good/almost => correct streak +1
+      // - bad => reset streak
+      if (verdict === "good" || verdict === "almost"){
+        st.streak += 1;
+
+        // Release rule: 3 correct in a row removes from Trouble by resetting that unit’s trouble stats
+        if (st.streak >= 3 && troubleScoreUnit(st) > 0){
+          resetUnitToReleaseFromTrouble(st);
+          removeRecentUnit(u);
+        }
+      } else {
+        st.streak = 0;
+      }
     }
 
     if (verdict === "bad"){
+      // Wrong increments only for those units attributed as wrong
       for (const u of wrong){
         const key = unitKey(u);
         const st = ensureUnitStat(state.unitStats, key);
         st.wrong += 1;
         st.last = Date.now();
+        st.streak = 0;
         addRecentUnit(u);
       }
     }
@@ -381,6 +466,12 @@ import { loadJson, saveJson } from "./storage.js";
       : unitsToRomaji(kanaToUnits(item.kana));
 
     const accepted = [primary, primary.replaceAll("wa","ha")];
+
+    // Trouble count before
+    const troubleBefore = getTroubleList();
+    const troubleBeforeKeys = new Set(troubleBefore.map(x => x.key));
+    const beforeCount = troubleBefore.length;
+
     const result = isCorrectDetailed(userRaw, accepted, state.settings, item.kana);
 
     state.stats.seen += 1;
@@ -435,6 +526,18 @@ import { loadJson, saveJson } from "./storage.js";
           <p class="mini">${escapeHtml(describeDiff(userRaw, primary) || "")}</p>
         `
       });
+    }
+
+    // Trouble count after + pulse
+    const troubleAfter = getTroubleList();
+    const afterCount = troubleAfter.length;
+    const delta = afterCount - beforeCount;
+
+    if (delta !== 0){
+      pulseTrouble(delta);
+    } else {
+      // Still provide a subtle “release” message when a unit hits 3 streak even if count unchanged due to script filter,
+      // but we keep it simple to avoid noise.
     }
 
     state.checked = true;
@@ -498,6 +601,53 @@ import { loadJson, saveJson } from "./storage.js";
     els.answer.focus();
   }
 
+  function openTroubleModal(){
+    if (!els.troubleModal || !els.troubleOverlay) return;
+
+    const rows = getTroubleList();
+    if (els.troubleList){
+      if (!rows.length){
+        els.troubleList.innerHTML = `
+          <div class="troubleEmpty">
+            <p class="mini" style="margin:0 0 6px"><b>No trouble kana right now.</b></p>
+            <p class="mini" style="margin:0">Keep practising — items you miss repeatedly will appear here.</p>
+          </div>
+        `;
+      } else {
+        const html = rows.map(r => {
+          const acc = r.seen ? Math.round(((r.seen - r.wrong) / r.seen) * 100) : 0;
+          return `
+            <div class="troubleRow">
+              <div class="troubleKana">${escapeHtml(r.unit)}</div>
+              <div class="troubleMeta">
+                <div><span class="troublePill">wrong</span> <b>${r.wrong}</b></div>
+                <div><span class="troublePill">seen</span> <b>${r.seen}</b></div>
+                <div><span class="troublePill">acc</span> <b>${acc}%</b></div>
+              </div>
+            </div>
+          `;
+        }).join("");
+        els.troubleList.innerHTML = html;
+      }
+    }
+
+    els.troubleModal.classList.add("open");
+    els.troubleOverlay.classList.add("open");
+    document.body.style.overflow = "hidden";
+  }
+
+  function closeTroubleModal(){
+    if (!els.troubleModal || !els.troubleOverlay) return;
+    els.troubleModal.classList.remove("open");
+    els.troubleOverlay.classList.remove("open");
+    document.body.style.overflow = "";
+    els.answer.focus();
+  }
+
+  function handleTroubleCardActivate(){
+    openTroubleModal();
+  }
+
   els.checkBtn.addEventListener("click", checkAnswer);
   els.revealBtn.addEventListener("click", reveal);
   els.nextBtn.addEventListener("click", next);
@@ -524,12 +674,28 @@ import { loadJson, saveJson } from "./storage.js";
     els.kanaFontSerif.addEventListener("change", setKanaFontFromToggle);
   }
 
+  // Trouble modal events
+  if (els.troubleCard){
+    els.troubleCard.addEventListener("click", handleTroubleCardActivate);
+    els.troubleCard.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " "){
+        e.preventDefault();
+        handleTroubleCardActivate();
+      }
+    });
+  }
+  if (els.closeTroubleBtn) els.closeTroubleBtn.addEventListener("click", closeTroubleModal);
+  if (els.troubleOverlay) els.troubleOverlay.addEventListener("click", closeTroubleModal);
+
   function handleKey(e){
     const drawerOpen = els.drawer.classList.contains("open");
     const helpOpen = els.helpModal.classList.contains("open");
-    if (drawerOpen || helpOpen) {
+    const troubleOpen = els.troubleModal && els.troubleModal.classList.contains("open");
+
+    if (drawerOpen || helpOpen || troubleOpen) {
       if (e.key === "Escape") {
         if (helpOpen) closeHelp();
+        else if (troubleOpen) closeTroubleModal();
         else closeDrawer();
         e.preventDefault();
       }
@@ -560,7 +726,6 @@ import { loadJson, saveJson } from "./storage.js";
   }
 
   applyKanaFont();
-
   setInitialPills();
 
   const tutorialSeen = !!loadJson(LS_KEY_TUTORIAL, false);

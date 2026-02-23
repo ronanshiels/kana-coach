@@ -1,186 +1,211 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Kana Coach</title>
-
-  <!-- Icons -->
-  <link rel="icon" type="image/svg+xml" href="assets/icons/jp-flag.svg">
-  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/jp-flag-32.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/jp-flag-180.png">
-
-  <meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Kana Coach">
-
-  <link rel="stylesheet" href="assets/css/styles.css" />
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2685.3">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Times; -webkit-text-stroke: #000000; min-height: 14.0px}
+    span.s1 {font-kerning: none}
+  </style>
 </head>
-
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <!-- Simple title -->
-      <div class="brand" aria-label="Kana Coach">Kana Coach</div>
-
-      <div style="display:flex;gap:10px;align-items:center">
-        <button class="icon" id="helpBtn" aria-label="Help"><span class="iconGlyph">?</span></button>
-
-        <!-- Settings cog as SVG for true centering -->
-        <button class="icon" id="menuBtn" aria-label="Open settings">
-          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path fill="currentColor" d="M19.14,12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.4.12-.61l-1.92-3.32c-.11-.21-.36-.3-.58-.22l-2.39.96c-.5-.38-1.04-.7-1.64-.94l-.36-2.54c-.03-.23-.23-.4-.47-.4h-3.84c-.24,0-.44.17-.47.4l-.36,2.54c-.6.24-1.15.56-1.64.94l-2.39-.96c-.22-.09-.47.01-.58.22l-1.92,3.32c-.11.21-.06.47.12.61l2.03,1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03,1.58c-.18.14-.23.4-.12.61l1.92,3.32c.11.21.36.3.58.22l2.39-.96c.5.38,1.04.7,1.64.94l.36,2.54c.03.23.23.4.47.4h3.84c.24,0 .44-.17.47-.4l.36-2.54c.6-.24,1.15-.56,1.64-.94l2.39.96c.22.09.47-.01.58-.22l1.92-3.32c.11-.21.06-.47-.12-.61l-2.03-1.58ZM12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-
-    <div class="stack">
-
-      <!-- 1) Prompt container -->
-      <div class="card promptCard">
-        <div class="bigPrompt" id="prompt">—</div>
-        <div class="promptMeta">
-          <div id="typeMeta">—</div>
-          <div id="indexMeta">—</div>
-        </div>
-      </div>
-
-      <!-- 2) Answer / definition container -->
-      <div class="result" id="result">
-        <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
-      </div>
-
-      <!-- 3) Input container -->
-      <div class="card answerCard">
-        <div class="answerInner">
-          <input id="answer" type="text" placeholder="Type romaji…" autocomplete="off" spellcheck="false" />
-          <div class="btns">
-            <button class="primary" id="checkBtn">Check</button>
-            <button class="ghost" id="revealBtn">Reveal</button>
-            <button id="nextBtn">Next</button>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="bottom">
-      <div class="statCard">
-        <p class="statLabel">Streak</p>
-        <p class="statValue" id="streakValue">0</p>
-        <p class="statSub" id="modeTiny">Mode: Normal</p>
-      </div>
-      <div class="statCard">
-        <p class="statLabel">Accuracy</p>
-        <p class="statValue" id="accValue">—</p>
-        <p class="statSub" id="seenTiny">0 attempts</p>
-      </div>
-      <div class="statCard">
-        <p class="statLabel">Trouble kana</p>
-        <p class="statValue" id="troubleValue">0</p>
-        <p class="statSub">characters flagged</p>
-      </div>
-    </div>
-
-    <div class="pills">
-      <span class="pill" id="poolPill">Practice: —</span>
-      <span class="pill" id="scriptPill">Script: —</span>
-      <span class="pill" id="difficultyPill">Level: —</span>
-    </div>
-  </div>
-
-  <!-- Drawer -->
-  <div class="drawerOverlay" id="drawerOverlay"></div>
-  <aside class="drawer" id="drawer" aria-label="Settings">
-    <div class="drawerHeader">
-      <h2 class="drawerTitle">Settings</h2>
-      <button class="icon" id="closeDrawerBtn" aria-label="Close settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
-        </svg>
-      </button>
-    </div>
-
-    <div class="drawerSection">
-      <h2>Practice mode</h2>
-      <label for="modeSelect" style="display:block;margin:8px 0 6px">Mode</label>
-      <select id="modeSelect">
-        <option value="normal" selected>Normal (mix of characters/words/sentences)</option>
-        <option value="trouble">Trouble kana (characters you miss most)</option>
-        <option value="recent">Recent trouble kana (quick redo)</option>
-      </select>
-
-      <div class="hintBox" id="modeHint">
-        Trouble kana is calculated across all words/sentences too — the same character missed in different contexts is counted together.
-      </div>
-
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
-        <button id="resetSessionBtn">Reset session stats</button>
-        <button id="resetHistoryBtn">Reset learning history</button>
-      </div>
-    </div>
-
-    <div class="drawerSection">
-      <h2>What to practise</h2>
-      <label><input type="checkbox" id="mixChars" checked /> Include characters</label>
-      <label><input type="checkbox" id="mixWords" checked /> Include words (kana-only)</label>
-      <label><input type="checkbox" id="mixSentences" checked /> Include short sentences (kana-only)</label>
-
-      <label><input type="checkbox" id="allowLenient" checked /> Lenient checking (common romanisation variants)</label>
-      <label><input type="checkbox" id="allowAlmost" checked /> Mark close-but-not-standard as “Almost”</label>
-
-      <label for="scriptSelect" style="display:block;margin:12px 0 6px">Script</label>
-      <select id="scriptSelect">
-        <option value="both" selected>Hiragana + Katakana</option>
-        <option value="hira">Hiragana only</option>
-        <option value="kata">Katakana only</option>
-      </select>
-
-      <label for="difficultySelect" style="display:block;margin:12px 0 6px">Level</label>
-      <select id="difficultySelect">
-        <option value="easy">Easy</option>
-        <option value="standard" selected>Standard</option>
-        <option value="spicy">Spicy</option>
-      </select>
-
-      <div class="hintBox">
-        Keyboard: <span class="kbd">Enter</span> check/next • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> reveal • <span class="kbd">Esc</span> next
-      </div>
-    </div>
-  </aside>
-
-  <!-- Tutorial / Help modal -->
-  <div class="modalOverlay" id="helpOverlay"></div>
-  <div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-label="Welcome">
-    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
-      <h3 style="margin:0">Welcome to Kana Coach</h3>
-      <button class="icon" id="closeHelpBtn" aria-label="Close help">
-        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/>
-        </svg>
-      </button>
-    </div>
-
-    <p class="mini" style="margin-top:10px">
-      You’ll see kana (no kanji). Type the <span class="mono">romaji</span> and press <span class="kbd">Enter</span>.
-      Press <span class="kbd">Enter</span> again to move on.
-    </p>
-
-    <ul>
-      <li><b>Spaces don’t matter</b> (<span class="mono">watashi wa</span> = <span class="mono">watashiwa</span>).</li>
-      <li><b>Almost</b> appears for common “close” spellings (e.g. <span class="mono">cya</span> for <span class="mono">cha</span>, or <span class="mono">ha</span> when <span class="mono">は</span> is the particle <span class="mono">wa</span>).</li>
-      <li><b>wo / o</b> are both accepted when <span class="mono">を</span> is used as the object particle (standard is usually <span class="mono">o</span>).</li>
-      <li><b>Trouble kana</b> tracks characters you miss most — even when they appear inside different words/sentences.</li>
-      <li>Your progress is saved <b>locally on this device/browser</b>.</li>
-    </ul>
-
-    <div class="ctaRow">
-      <button id="dontShowAgainBtn">Got it</button>
-    </div>
-  </div>
-
-  <script type="module" src="assets/js/app.js"></script>
+<p class="p1"><span class="s1">&lt;!doctype html&gt;</span></p>
+<p class="p1"><span class="s1">&lt;html lang="en"&gt;</span></p>
+<p class="p1"><span class="s1">&lt;head&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta charset="utf-8" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;title&gt;Kana Coach&lt;/title&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Icons --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="icon" type="image/svg+xml" href="assets/icons/jp-flag.svg"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="icon" type="image/png" sizes="32x32" href="assets/icons/jp-flag-32.png"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="apple-touch-icon" sizes="180x180" href="assets/icons/jp-flag-180.png"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="theme-color" content="#0a0c12" media="(prefers-color-scheme: dark)"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-capable" content="yes"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-status-bar-style" content="default"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;meta name="apple-mobile-web-app-title" content="Kana Coach"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;link rel="stylesheet" href="assets/css/styles.css" /&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/head&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1">&lt;body&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="wrap"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="topbar"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- Simple title --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="brand" aria-label="Kana Coach"&gt;Kana Coach&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div style="display:flex;gap:10px;align-items:center"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button class="icon" id="helpBtn" aria-label="Help"&gt;&lt;span class="iconGlyph"&gt;?&lt;/span&gt;&lt;/button&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;!-- Settings cog as SVG for true centering --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button class="icon" id="menuBtn" aria-label="Open settings"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;path fill="currentColor" d="M19.14,12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.4.12-.61l-1.92-3.32c-.11-.21-.36-.3-.58-.22l-2.39.96c-.5-.38-1.04-.7-1.64-.94l-.36-2.54c-.03-.23-.23-.4-.47-.4h-3.84c-.24,0-.44.17-.47.4l-.36,2.54c-.6.24-1.15.56-1.64.94l-2.39-.96c-.22-.09-.47.01-.58.22l-1.92,3.32c-.11.21-.06.47.12.61l2.03,1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03,1.58c-.18.14-.23.4-.12.61l1.92,3.32c.11.21.36.3.58.22l2.39-.96c.5.38,1.04.7,1.64.94l.36,2.54c.03.23.23.4.47.4h3.84c.24,0 .44-.17.47-.4l.36-2.54c.6-.24,1.15-.56,1.64-.94l2.39.96c.22.09.47-.01.58-.22l1.92-3.32c.11-.21.06-.47-.12-.61l-2.03-1.58ZM12,15.5c-1.93,0-3.5-1.57-3.5-3.5s1.57-3.5,3.5-3.5,3.5,1.57,3.5,3.5-1.57,3.5-3.5,3.5Z"/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/svg&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="stack"&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- 1) Prompt container --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="card promptCard"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="bigPrompt" id="prompt"&gt;—&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="promptMeta"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div id="typeMeta"&gt;—&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div id="indexMeta"&gt;—&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- 2) Answer / definition container --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="result" id="result"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="mini"&gt;Press &lt;b&gt;Enter&lt;/b&gt; to check. Press &lt;b&gt;Enter&lt;/b&gt; again for next.&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;!-- 3) Input container --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="card answerCard"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;div class="answerInner"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;input id="answer" type="text" placeholder="Type romaji…" autocomplete="off" spellcheck="false" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;div class="btns"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button class="primary" id="checkBtn"&gt;Check&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button class="ghost" id="revealBtn"&gt;Reveal&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">            </span>&lt;button id="nextBtn"&gt;Next&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="bottom"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="statCard"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statLabel"&gt;Streak&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statValue" id="streakValue"&gt;0&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statSub" id="modeTiny"&gt;Mode: Normal&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="statCard"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statLabel"&gt;Accuracy&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statValue" id="accValue"&gt;—&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statSub" id="seenTiny"&gt;0 attempts&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="statCard"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statLabel"&gt;Trouble kana&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statValue" id="troubleValue"&gt;0&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;p class="statSub"&gt;characters flagged&lt;/p&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="pills"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill" id="poolPill"&gt;Practice: —&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill" id="scriptPill"&gt;Script: —&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;span class="pill" id="difficultyPill"&gt;Level: —&lt;/span&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Drawer --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="drawerOverlay" id="drawerOverlay"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;aside class="drawer" id="drawer" aria-label="Settings"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="drawerHeader"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h2 class="drawerTitle"&gt;Settings&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;button class="icon" id="closeDrawerBtn" aria-label="Close settings"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 1 0 0 0 0-1.4z"/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/svg&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="drawerSection"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h2&gt;Practice mode&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label for="modeSelect" style="display:block;margin:8px 0 6px"&gt;Mode&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;select id="modeSelect"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="normal" selected&gt;Normal (mix of characters/words/sentences)&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="trouble"&gt;Trouble kana (characters you miss most)&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="recent"&gt;Recent trouble kana (quick redo)&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/select&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="hintBox" id="modeHint"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Trouble kana is calculated across all words/sentences too — the same character missed in different contexts is counted together.</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="resetSessionBtn"&gt;Reset session stats&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;button id="resetHistoryBtn"&gt;Reset learning history&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="drawerSection"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h2&gt;What to practise&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;&lt;input type="checkbox" id="mixChars" checked /&gt; Include characters&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;&lt;input type="checkbox" id="mixWords" checked /&gt; Include words (kana-only)&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;&lt;input type="checkbox" id="mixSentences" checked /&gt; Include short sentences (kana-only)&lt;/label&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;&lt;input type="checkbox" id="allowLenient" checked /&gt; Lenient checking (common romanisation variants)&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;&lt;input type="checkbox" id="allowAlmost" checked /&gt; Mark close-but-not-standard as “Almost”&lt;/label&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label for="scriptSelect" style="display:block;margin:12px 0 6px"&gt;Script&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;select id="scriptSelect"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="both" selected&gt;Hiragana + Katakana&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="hira"&gt;Hiragana only&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="kata"&gt;Katakana only&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/select&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label for="difficultySelect" style="display:block;margin:12px 0 6px"&gt;Level&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;select id="difficultySelect"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="easy"&gt;Easy&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="standard" selected&gt;Standard&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;option value="spicy"&gt;Spicy&lt;/option&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/select&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="hintBox"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Keyboard: &lt;span class="kbd"&gt;Enter&lt;/span&gt; check/next • &lt;span class="kbd"&gt;Shift&lt;/span&gt;+&lt;span class="kbd"&gt;Enter&lt;/span&gt; reveal • &lt;span class="kbd"&gt;Esc&lt;/span&gt; next</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;!-- NEW: Appearance --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div class="drawerSection"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h2&gt;Appearance&lt;/h2&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;input type="checkbox" id="kanaFontSerif" /&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Use Mincho-style kana font (serif)</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/label&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;div class="hintBox"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>Switches the large kana prompt between a rounded system style and a Japanese serif (Mincho-like) style.</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/aside&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;!-- Tutorial / Help modal --&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="modalOverlay" id="helpOverlay"&gt;&lt;/div&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;div class="modal" id="helpModal" role="dialog" aria-modal="true" aria-label="Welcome"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;div style="display:flex;align-items:center;justify-content:space-between;gap:10px"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;h3 style="margin:0"&gt;Welcome to Kana Coach&lt;/h3&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;button class="icon" id="closeHelpBtn" aria-label="Close help"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">          </span>&lt;path fill="currentColor" d="M18.3 5.71a1 1 0 0 0-1.41 0L12 10.59 7.11 5.7A1 1 0 0 0 5.7 7.11L10.59 12l-4.89 4.89a1 1 0 1 0 1.41 1.41L12 13.41l4.89 4.89a1 1 0 0 0 1.41-1.41L13.41 12l4.89-4.89a1 0 0 0 0-1.4z"/&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">        </span>&lt;/svg&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;/button&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;p class="mini" style="margin-top:10px"&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>You’ll see kana (no kanji). Type the &lt;span class="mono"&gt;romaji&lt;/span&gt; and press &lt;span class="kbd"&gt;Enter&lt;/span&gt;.</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>Press &lt;span class="kbd"&gt;Enter&lt;/span&gt; again to move on.</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/p&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;li&gt;&lt;b&gt;Spaces don’t matter&lt;/b&gt; (&lt;span class="mono"&gt;watashi wa&lt;/span&gt; = &lt;span class="mono"&gt;watashiwa&lt;/span&gt;).&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;li&gt;&lt;b&gt;Almost&lt;/b&gt; appears for common “close” spellings (e.g. &lt;span class="mono"&gt;cya&lt;/span&gt; for &lt;span class="mono"&gt;cha&lt;/span&gt;, or &lt;span class="mono"&gt;ha&lt;/span&gt; when &lt;span class="mono"&gt;は&lt;/span&gt; is the particle &lt;span class="mono"&gt;wa&lt;/span&gt;).&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;li&gt;&lt;b&gt;wo / o&lt;/b&gt; are both accepted when &lt;span class="mono"&gt;を&lt;/span&gt; is used as the object particle (standard is usually &lt;span class="mono"&gt;o&lt;/span&gt;).&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;li&gt;&lt;b&gt;Trouble kana&lt;/b&gt; tracks characters you miss most — even when they appear inside different words/sentences.&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">      </span>&lt;li&gt;Your progress is saved &lt;b&gt;locally on this device/browser&lt;/b&gt;.&lt;/li&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">    </span>&lt;/ul&gt;</span></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;/div&gt;</span></p>
+<p class="p2"><span class="s1"></span><br></p>
+<p class="p1"><span class="s1"><span class="Apple-converted-space">  </span>&lt;script type="module" src="assets/js/app.js"&gt;&lt;/script&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/body&gt;</span></p>
+<p class="p1"><span class="s1">&lt;/html&gt;</span></p>
 </body>
 </html>

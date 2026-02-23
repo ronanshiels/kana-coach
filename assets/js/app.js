@@ -17,8 +17,9 @@ import { loadJson, saveJson } from "./storage.js";
   const LS_KEY_UNIT_STATS = "kanaCoach.unitStats.v1";
   const LS_KEY_RECENT_UNITS = "kanaCoach.recentUnits.v1";
   const LS_KEY_TUTORIAL = "kanaCoach.tutorialSeen.v1";
+  const LS_KEY_KANA_FONT = "kanaCoach.kanaFont.v1"; // "rounded" | "serif"
 
-function shuffle(arr){
+  function shuffle(arr){
     const a = arr.slice();
     for (let i=a.length-1;i>0;i--){
       const j = Math.floor(Math.random()*(i+1));
@@ -27,7 +28,7 @@ function shuffle(arr){
     return a;
   }
 
-function unitKey(unit){
+  function unitKey(unit){
     const script = /[ぁ-ゖゔ]/.test(unit) ? "hira" : (/[ァ-ヶヴー]/.test(unit) ? "kata" : "other");
     return `${script}|${unit}`;
   }
@@ -55,7 +56,7 @@ function unitKey(unit){
     return out;
   }
 
-const els = {
+  const els = {
     prompt: document.getElementById("prompt"),
     answer: document.getElementById("answer"),
     result: document.getElementById("result"),
@@ -85,7 +86,6 @@ const els = {
     helpOverlay: document.getElementById("helpOverlay"),
     helpModal: document.getElementById("helpModal"),
     closeHelpBtn: document.getElementById("closeHelpBtn"),
-    dontShowAgainBtn: document.getElementById("dontShowAgainBtn"),
 
     modeSelect: document.getElementById("modeSelect"),
     modeHint: document.getElementById("modeHint"),
@@ -99,6 +99,8 @@ const els = {
     allowAlmost: document.getElementById("allowAlmost"),
     scriptSelect: document.getElementById("scriptSelect"),
     difficultySelect: document.getElementById("difficultySelect"),
+
+    kanaFontSerif: document.getElementById("kanaFontSerif"),
   };
 
   const state = {
@@ -114,7 +116,21 @@ const els = {
 
     unitStats: loadJson(LS_KEY_UNIT_STATS, {}),
     recentUnits: loadJson(LS_KEY_RECENT_UNITS, []),
+
+    kanaFont: loadJson(LS_KEY_KANA_FONT, "rounded"),
   };
+
+  function applyKanaFont(){
+    const serifOn = state.kanaFont === "serif";
+    document.documentElement.classList.toggle("kanaSerif", serifOn);
+    if (els.kanaFontSerif) els.kanaFontSerif.checked = serifOn;
+  }
+
+  function setKanaFontFromToggle(){
+    state.kanaFont = els.kanaFontSerif && els.kanaFontSerif.checked ? "serif" : "rounded";
+    saveJson(LS_KEY_KANA_FONT, state.kanaFont);
+    applyKanaFont();
+  }
 
   function getSettings(){
     return {
@@ -423,6 +439,8 @@ const els = {
     document.body.style.overflow = "hidden";
   }
   function closeHelp(){
+    // Mark tutorial as seen on close (no separate "Got it" button)
+    saveJson(LS_KEY_TUTORIAL, true);
     els.helpModal.classList.remove("open");
     els.helpOverlay.classList.remove("open");
     document.body.style.overflow = "";
@@ -441,11 +459,6 @@ const els = {
   els.closeHelpBtn.addEventListener("click", closeHelp);
   els.helpOverlay.addEventListener("click", closeHelp);
 
-  els.dontShowAgainBtn.addEventListener("click", () => {
-    saveJson(LS_KEY_TUTORIAL, true);
-    closeHelp();
-  });
-
   els.modeSelect.addEventListener("change", () => applyMode(true));
 
   [els.mixChars, els.mixWords, els.mixSentences, els.allowLenient, els.allowAlmost, els.scriptSelect, els.difficultySelect]
@@ -453,6 +466,10 @@ const els = {
 
   els.resetSessionBtn.addEventListener("click", resetSession);
   els.resetHistoryBtn.addEventListener("click", resetHistory);
+
+  if (els.kanaFontSerif){
+    els.kanaFontSerif.addEventListener("change", setKanaFontFromToggle);
+  }
 
   function handleKey(e){
     const drawerOpen = els.drawer.classList.contains("open");
@@ -487,6 +504,9 @@ const els = {
     applyMode(true);
     updateStatsUI();
   }
+
+  // Apply saved prompt font preference early
+  applyKanaFont();
 
   setInitialPills();
 

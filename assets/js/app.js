@@ -768,6 +768,14 @@ import { loadJson, saveJson } from "./storage.js";
   const CHANGELOG = [
     
     {
+      version: "v0.8.5",
+      date: "2026-02-23",
+      items: [
+        "Improved iOS Home Screen (standalone) display: enabled translucent status bar and ensured content respects the safe-area inset so the top bar never sits under the notch.",
+      ]
+    },
+    
+    {
       version: "v0.8.4",
       date: "2026-02-23",
       items: [

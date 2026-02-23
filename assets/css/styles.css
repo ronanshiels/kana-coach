@@ -73,6 +73,27 @@ body{
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* iOS PWA (standalone) status bar handling
+   - With apple-mobile-web-app-status-bar-style=black-translucent, iOS draws white status icons.
+   - Add a very subtle scrim behind the status bar area in light mode for legibility,
+     while keeping an edge-to-edge background. */
+body::before{
+  content:"";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top);
+  pointer-events: none;
+  z-index: 5;
+  background: rgba(0,0,0,.0); /* dark mode: effectively off */
+}
+@media (prefers-color-scheme: light){
+  body::before{
+    background: rgba(0,0,0,.10);
+  }
+}
+
 .wrap{
   max-width: 980px;
   margin: 0 auto;

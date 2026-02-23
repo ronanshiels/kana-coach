@@ -180,10 +180,10 @@ import { loadJson, saveJson } from "./storage.js";
     state.kanaFont = els.kanaFontSerif && els.kanaFontSerif.checked ? "serif" : "rounded";
     saveJson(LS_KEY_KANA_FONT, state.kanaFont);
     applyKanaFont();
-  applyShowSpaces();
   }
 
   function applyShowSpaces(){
+    document.documentElement.classList.toggle("showSpaces", !!state.showSpaces);
     if (els.showSpaces) els.showSpaces.checked = !!state.showSpaces;
   }
 
@@ -203,10 +203,11 @@ import { loadJson, saveJson } from "./storage.js";
     // Only add spaces for words/sentences (never split individual characters)
     if (type === "char") return kana;
 
+    const GAP = "  "; // two spaces for a more visible word break
     let s = (kana || "");
 
     // Add spaces around punctuation
-    s = s.replace(/、/g, "、 ");
+    s = s.replace(/、/g, "、" + GAP);
 
     // Add spaces after common particles and phrase boundaries (longest first)
     const rules = [
@@ -217,13 +218,13 @@ import { loadJson, saveJson } from "./storage.js";
     ];
 
     for (const r of rules){
-      // Add a space AFTER the boundary when followed by more kana/katakana
+      // Add a gap AFTER the boundary when followed by more kana/katakana
       const reBoundary = new RegExp(r + "(?=[ぁ-ゖゔァ-ヶヴーー])","g");
-      s = s.replace(reBoundary, r + " ");
+      s = s.replace(reBoundary, r + GAP);
     }
 
-    // Clean up multiple spaces
-    s = s.replace(/\s+/g, " ").trim();
+    // Normalise whitespace to our visible gap
+    s = s.replace(/\s+/g, GAP).trim();
     return s;
   }
 
@@ -818,6 +819,7 @@ import { loadJson, saveJson } from "./storage.js";
   }
 
   applyKanaFont();
+  applyShowSpaces();
   setInitialPills();
 
   const tutorialSeen = !!loadJson(LS_KEY_TUTORIAL, false);

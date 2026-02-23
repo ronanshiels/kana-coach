@@ -113,7 +113,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>
@@ -191,7 +191,7 @@
       <label><input type="checkbox" id="allowAlmost" checked /> Mark close-but-not-standard as “Almost”</label>
 
       <div class="hintBox">
-        Notes: spacing matters for multi‑word phrases. In <b>Easy</b> and <b>Standard</b>, missing/extra spaces will be marked as <b>Almost</b>. In <b>Spicy</b>, spacing must be exact. For particles, you’ll often see <span class="mono">は</span> read as <span class="mono">wa</span>, and <span class="mono">を</span> commonly written as <span class="mono">o</span> (though <span class="mono">wo</span> exists too).</div>
+        Notes: for particles, you’ll often see <span class="mono">は</span> read as <span class="mono">wa</span>, and <span class="mono">を</span> commonly written as <span class="mono">o</span> (though <span class="mono">wo</span> exists too).</div>
 
       <div class="hintBox">
         Keyboard: <span class="kbd">Enter</span> check/next • <span class="kbd">Shift</span>+<span class="kbd">Enter</span> reveal • <span class="kbd">Esc</span> next
@@ -238,21 +238,30 @@
 
     <div class="helpSections">
       <div class="helpSection">
-        <h4>How answers are checked</h4>
+        <h4>Quick start</h4>
         <ul>
-          <li><b>Spacing matters</b> for multi‑word phrases. In <b>Easy</b> and <b>Standard</b>, spacing issues are marked as <b>Almost</b>. In <b>Spicy</b>, spacing must be exact.</li>
-          <li><b>Lenient checking</b> accepts common variants (e.g. <span class="mono">shi/si</span>, <span class="mono">chi/ti</span>, etc.).</li>
-          <li><b>Almost</b> appears when your input is close-but-not-standard (you’ll see exactly what differed).</li>
-          <li>Note: some particles differ from “spelling”: <span class="mono">は</span> is often read <span class="mono">wa</span>, and <span class="mono">を</span> is commonly written <span class="mono">o</span> (though <span class="mono">wo</span> exists too).</li>
+          <li>Read the kana prompt and type the <span class="mono">romaji</span>.</li>
+          <li><span class="kbd">Enter</span> checks your answer. Press <span class="kbd">Enter</span> again for the next item.</li>
+          <li><span class="kbd">Shift</span> + <span class="kbd">Enter</span> reveals the answer. <span class="kbd">Esc</span> skips.</li>
         </ul>
       </div>
 
       <div class="helpSection">
-        <h4>Trouble kana (how it works)</h4>
+        <h4>Answer checking</h4>
         <ul>
-          <li>If you <b>miss the same kana repeatedly</b>, it gets flagged as <b>Trouble</b> — even if it appears inside different words/sentences.</li>
-          <li><b>Release rule:</b> once you identify a trouble kana <b>correctly 3 times in a row</b>, it’s removed from Trouble.</li>
-          <li>Tap the <b>Trouble kana</b> counter to see the current list.</li>
+          <li><b>Spacing matters</b> when a phrase has multiple words (you can optionally show word spaces in <b>Settings → Appearance</b>).</li>
+          <li>In <b>Easy</b> and <b>Standard</b>, spacing mistakes are marked <b>Almost</b>. In <b>Spicy</b>, spacing must be exact.</li>
+          <li><b>Lenient checking</b> accepts common variants (e.g. <span class="mono">shi/si</span>, <span class="mono">chi/ti</span>), and particles like <span class="mono">は</span> (<span class="mono">wa</span>) and <span class="mono">を</span> (<span class="mono">o/wo</span>).</li>
+          <li><b>Almost</b> means you were close — we’ll highlight exactly what differed.</li>
+        </ul>
+      </div>
+
+      <div class="helpSection">
+        <h4>Trouble kana</h4>
+        <ul>
+          <li>Kana you miss repeatedly get flagged as <b>Trouble</b>, even inside words or sentences.</li>
+          <li>Get a trouble kana <b>correct 3 times in a row</b> to release it.</li>
+          <li>Tap the <b>Trouble kana</b> counter to view the current list.</li>
         </ul>
       </div>
 
@@ -262,7 +271,7 @@
           <li>Your progress is saved <b>locally on this device/browser</b>.</li>
         </ul>
       </div>
-    </div>
+    </div></div>
   </div>
 
   <!-- Trouble list modal -->

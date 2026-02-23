@@ -197,6 +197,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
   line-height:1.05;
   margin: 6px 0 10px;
   letter-spacing:.5px;
+  white-space: pre-wrap;
   text-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 8%, transparent); /* reduced */
 }
 
@@ -213,6 +214,11 @@ html.kanaSerif .bigPrompt{
     Georgia,
     serif;
   letter-spacing: .3px;
+}
+
+/* Optional: emphasise word gaps when 'Show spaces' is enabled */
+html.showSpaces .bigPrompt{
+  word-spacing: 0.9em;
 }
 
 .promptMeta{

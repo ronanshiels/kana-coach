@@ -27,15 +27,8 @@ export const SENTENCE_CATEGORIES = [
    WORDS (1,200)
    ----------------------------- */
 
-/**
- * We build 1,200 "word" items as kana-only vocab + short phrases:
- * - Curated base words (high value)
- * - Then deterministic combinatoric expansions (adj+noun, noun+の+noun, verb phrases)
- * This keeps the file maintainable while still giving you a big library.
- */
-
 const BASE_WORD_BANK = [
-  // easy (short, very common)
+  // easy
   { kana: "はい", romaji: "hai", meaning: "Yes", diff: "easy" },
   { kana: "いいえ", romaji: "iie", meaning: "No", diff: "easy" },
   { kana: "ありがとう", romaji: "arigatou", meaning: "Thank you", diff: "easy" },
@@ -61,7 +54,7 @@ const BASE_WORD_BANK = [
   { kana: "えき", romaji: "eki", meaning: "Station", diff: "easy" },
   { kana: "でんしゃ", romaji: "densha", meaning: "Train", diff: "easy" },
 
-  // standard (longer/common travel vocab)
+  // standard
   { kana: "くうこう", romaji: "kuukou", meaning: "Airport", diff: "standard" },
   { kana: "きっぷ", romaji: "kippu", meaning: "Ticket", diff: "standard" },
   { kana: "パスポート", romaji: "pasupooto", meaning: "Passport", diff: "standard" },
@@ -85,7 +78,7 @@ const BASE_WORD_BANK = [
   { kana: "あつい", romaji: "atsui", meaning: "Hot", diff: "standard" },
   { kana: "さむい", romaji: "samui", meaning: "Cold", diff: "standard" },
 
-  // spicy (katakana-dense / longer / tricky)
+  // spicy
   { kana: "クレジットカード", romaji: "kurejitto kaado", meaning: "Credit card", diff: "spicy" },
   { kana: "モバイルバッテリー", romaji: "mobairu batterii", meaning: "Portable battery", diff: "spicy" },
   { kana: "イヤホン", romaji: "iyahon", meaning: "Earphones", diff: "spicy" },
@@ -98,7 +91,7 @@ const BASE_WORD_BANK = [
 ];
 
 const NOUNS = [
-  // easy nouns
+  // easy
   { kana: "なまえ", romaji: "namae", meaning: "Name", diff: "easy" },
   { kana: "ともだち", romaji: "tomodachi", meaning: "Friend", diff: "easy" },
   { kana: "かぞく", romaji: "kazoku", meaning: "Family", diff: "easy" },
@@ -110,7 +103,7 @@ const NOUNS = [
   { kana: "くつ", romaji: "kutsu", meaning: "Shoes", diff: "easy" },
   { kana: "かさ", romaji: "kasa", meaning: "Umbrella", diff: "easy" },
 
-  // standard nouns
+  // standard
   { kana: "でんわ", romaji: "denwa", meaning: "Telephone", diff: "standard" },
   { kana: "でんわばんごう", romaji: "denwa bangou", meaning: "Phone number", diff: "standard" },
   { kana: "じかん", romaji: "jikan", meaning: "Time", diff: "standard" },
@@ -123,7 +116,7 @@ const NOUNS = [
   { kana: "でぐち", romaji: "deguchi", meaning: "Exit", diff: "standard" },
   { kana: "きっさてん", romaji: "kissaten", meaning: "Cafe (traditional)", diff: "standard" },
 
-  // spicy nouns (katakana/long)
+  // spicy
   { kana: "スマートフォン", romaji: "sumaato fon", meaning: "Smartphone", diff: "spicy" },
   { kana: "ワイファイ", romaji: "waifai", meaning: "Wi-Fi", diff: "spicy" },
   { kana: "ナビゲーション", romaji: "nabigeeshon", meaning: "Navigation", diff: "spicy" },
@@ -182,14 +175,14 @@ function uniqByKana(rows){
 function buildWordRows1200(){
   const rows = [];
 
-  // 1) Seed with curated bases
+  // Seed with curated bases
   rows.push(...BASE_WORD_BANK);
   rows.push(...NOUNS);
   rows.push(...ADJECTIVES);
   rows.push(...VERB_PHRASES);
   rows.push(...KATA_LOANWORDS);
 
-  // 2) Expand: adjective + noun (as kana phrase)
+  // adjective + noun
   for (const a of ADJECTIVES){
     for (const n of NOUNS){
       const kana = `${a.kana}${n.kana}`;
@@ -200,7 +193,7 @@ function buildWordRows1200(){
     }
   }
 
-  // 3) Expand: noun + の + noun
+  // noun + の + noun
   for (const a of NOUNS){
     for (const b of NOUNS){
       if (a.kana === b.kana) continue;
@@ -212,7 +205,7 @@ function buildWordRows1200(){
     }
   }
 
-  // 4) Expand: katakana loanword + です (as phrase)
+  // loanword + です
   for (const k of KATA_LOANWORDS){
     const kana = `${k.kana}です`;
     const romaji = `${k.romaji} desu`;
@@ -220,7 +213,7 @@ function buildWordRows1200(){
     rows.push({ kana, romaji, meaning, diff: (k.diff === "spicy" ? "spicy" : "standard") });
   }
 
-  // 5) Expand: polite request mini-phrases
+  // noun + (ください / おねがいします)
   const requestEnds = [
     { kana: "ください", romaji: "kudasai", meaning: "please", diff: "easy" },
     { kana: "おねがいします", romaji: "onegaishimasu", meaning: "please (polite)", diff: "easy" },
@@ -235,11 +228,7 @@ function buildWordRows1200(){
     }
   }
 
-  // Make deterministic + unique + exact count
   const unique = uniqByKana(rows);
-
-  // If still short (unlikely), pad by making numbered variants that stay kana-only (rare)
-  // But in practice, unique will far exceed 1200; we slice deterministically.
   return unique.slice(0, 1200);
 }
 
@@ -255,207 +244,730 @@ export const WORD_ITEMS = WORD_ROWS_1200.map(({ kana, romaji, meaning, diff }) =
 }));
 
 /* -----------------------------
-   SENTENCES (240) + categories
+   SENTENCES (240) — frame-based + whitelisted variants
    ----------------------------- */
+
+// Slot helpers
+const maxDiff = (a, b) => (DIFF_RANK[a] >= DIFF_RANK[b]) ? a : b;
+
+// Whitelisted slot sets (curated for “sounds natural in this frame”)
+const PLACES_WHERE = [
+  { kana:"トイレ", romaji:"toire", meaning:"toilet", diff:"easy" },
+  { kana:"えき", romaji:"eki", meaning:"station", diff:"easy" },
+  { kana:"ホテル", romaji:"hoteru", meaning:"hotel", diff:"easy" },
+  { kana:"レストラン", romaji:"resutoran", meaning:"restaurant", diff:"standard" },
+  { kana:"コンビニ", romaji:"konbini", meaning:"convenience store", diff:"standard" },
+  { kana:"くうこう", romaji:"kuukou", meaning:"airport", diff:"standard" },
+  { kana:"こうえん", romaji:"kouen", meaning:"park", diff:"standard" },
+  { kana:"びょういん", romaji:"byouin", meaning:"hospital", diff:"spicy" },
+  { kana:"こうばん", romaji:"kouban", meaning:"police box", diff:"spicy" },
+];
+
+const PLACES_GO = [
+  { kana:"えき", romaji:"eki", meaning:"station", diff:"easy" },
+  { kana:"ホテル", romaji:"hoteru", meaning:"hotel", diff:"easy" },
+  { kana:"くうこう", romaji:"kuukou", meaning:"airport", diff:"standard" },
+  { kana:"レストラン", romaji:"resutoran", meaning:"restaurant", diff:"standard" },
+  { kana:"こうえん", romaji:"kouen", meaning:"park", diff:"standard" },
+  { kana:"びょういん", romaji:"byouin", meaning:"hospital", diff:"spicy" },
+];
+
+const FOOD_ORDER = [
+  { kana:"みず", romaji:"mizu", meaning:"water", diff:"easy" },
+  { kana:"おちゃ", romaji:"ocha", meaning:"tea", diff:"easy" },
+  { kana:"コーヒー", romaji:"koohii", meaning:"coffee", diff:"standard" },
+  { kana:"ごはん", romaji:"gohan", meaning:"rice / meal", diff:"easy" },
+  { kana:"らーめん", romaji:"raamen", meaning:"ramen", diff:"standard" },
+  { kana:"すし", romaji:"sushi", meaning:"sushi", diff:"standard" },
+  { kana:"てんぷら", romaji:"tenpura", meaning:"tempura", diff:"standard" },
+];
+
+const COUNTABLE_ORDER = [
+  { kana:"ひとつ", romaji:"hitotsu", meaning:"one (thing)", diff:"easy" },
+  { kana:"ふたつ", romaji:"futatsu", meaning:"two (things)", diff:"easy" },
+  { kana:"みっつ", romaji:"mittsu", meaning:"three (things)", diff:"standard" },
+];
+
+const TRANSIT_NOUNS = [
+  { kana:"でんしゃ", romaji:"densha", meaning:"train", diff:"easy" },
+  { kana:"バス", romaji:"basu", meaning:"bus", diff:"standard" },
+  { kana:"タクシー", romaji:"takushii", meaning:"taxi", diff:"standard" },
+];
+
+const PAYMENT_METHODS = [
+  { kana:"げんきん", romaji:"genkin", meaning:"cash", diff:"standard" },
+  { kana:"クレジットカード", romaji:"kurejitto kaado", meaning:"credit card", diff:"spicy" },
+];
+
+const BASIC_FEELINGS = [
+  { kana:"だいじょうぶ", romaji:"daijoubu", meaning:"okay", diff:"easy" },
+  { kana:"つかれました", romaji:"tsukaremashita", meaning:"tired (polite)", diff:"standard" },
+  { kana:"きもちわるいです", romaji:"kimochi warui desu", meaning:"I feel sick.", diff:"spicy" },
+];
+
+const TIMES = [
+  { kana:"いま", romaji:"ima", meaning:"now", diff:"easy" },
+  { kana:"きょう", romaji:"kyou", meaning:"today", diff:"standard" },
+  { kana:"あした", romaji:"ashita", meaning:"tomorrow", diff:"standard" },
+  { kana:"あとで", romaji:"atode", meaning:"later", diff:"easy" },
+];
+
+// Frame definition:
+// - category
+// - baseDifficulty (can be upgraded by slots)
+// - builder(slot) returns { kana, romaji, meaning }
+const SENT_FRAMES = [
+  // --- Travel & basics (slight skew: more frames + more variants) ---
+  {
+    id: "where_basic",
+    category: "travel",
+    baseDifficulty: "easy",
+    slots: PLACES_WHERE,
+    build: (p) => ({
+      kana: `${p.kana}はどこですか`,
+      romaji: `${p.romaji} wa doko desu ka`,
+      meaning: `Where is the ${p.meaning}?`,
+    }),
+  },
+  {
+    id: "where_polite",
+    category: "travel",
+    baseDifficulty: "standard",
+    slots: PLACES_WHERE,
+    build: (p) => ({
+      kana: `すみません、${p.kana}はどこですか`,
+      romaji: `sumimasen ${p.romaji} wa doko desu ka`,
+      meaning: `Excuse me, where is the ${p.meaning}?`,
+    }),
+  },
+  {
+    id: "dont_understand",
+    category: "travel",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "わかりません",
+      romaji: "wakarimasen",
+      meaning: "I don’t understand.",
+    }),
+  },
+  {
+    id: "one_more_time",
+    category: "travel",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "もういちどいってください",
+      romaji: "mou ichido itte kudasai",
+      meaning: "Please say it one more time.",
+    }),
+  },
+  {
+    id: "speak_slowly",
+    category: "travel",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "ゆっくりはなしてください",
+      romaji: "yukkuri hanashite kudasai",
+      meaning: "Please speak slowly.",
+    }),
+  },
+  {
+    id: "do_you_speak_english",
+    category: "travel",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "えいごははなせますか",
+      romaji: "eigo wa hanasemasu ka",
+      meaning: "Do you speak English?",
+    }),
+  },
+
+  // --- Directions ---
+  {
+    id: "go_straight",
+    category: "directions",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "まっすぐいってください",
+      romaji: "massugu itte kudasai",
+      meaning: "Please go straight.",
+    }),
+  },
+  {
+    id: "turn_right",
+    category: "directions",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "みぎにまがってください",
+      romaji: "migi ni magatte kudasai",
+      meaning: "Please turn right.",
+    }),
+  },
+  {
+    id: "turn_left",
+    category: "directions",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "ひだりにまがってください",
+      romaji: "hidari ni magatte kudasai",
+      meaning: "Please turn left.",
+    }),
+  },
+  {
+    id: "how_do_i_get_to",
+    category: "directions",
+    baseDifficulty: "standard",
+    slots: PLACES_GO,
+    build: (p) => ({
+      kana: `${p.kana}にどうやっていきますか`,
+      romaji: `${p.romaji} ni dou yatte ikimasu ka`,
+      meaning: `How do I get to the ${p.meaning}?`,
+    }),
+  },
+
+  // --- Transport ---
+  {
+    id: "want_to_go_to",
+    category: "transport",
+    baseDifficulty: "standard",
+    slots: PLACES_GO,
+    build: (p) => ({
+      kana: `${p.kana}にいきたいです`,
+      romaji: `${p.romaji} ni ikitai desu`,
+      meaning: `I want to go to the ${p.meaning}.`,
+    }),
+  },
+  {
+    id: "where_is_platform",
+    category: "transport",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "プラットフォームはどこですか",
+      romaji: "puratto foomu wa doko desu ka",
+      meaning: "Where is the platform?",
+    }),
+  },
+  {
+    id: "what_time_next_train",
+    category: "transport",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "つぎのでんしゃはなんじですか",
+      romaji: "tsugi no densha wa nanji desu ka",
+      meaning: "What time is the next train?",
+    }),
+  },
+  {
+    id: "buy_ticket",
+    category: "transport",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "きっぷをかいたいです",
+      romaji: "kippu o kaitai desu",
+      meaning: "I want to buy a ticket.",
+    }),
+  },
+  {
+    id: "call_taxi",
+    category: "transport",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "タクシーをよんでください",
+      romaji: "takushii o yonde kudasai",
+      meaning: "Please call a taxi.",
+    }),
+  },
+
+  // --- Food & drink ---
+  {
+    id: "order_please",
+    category: "food_drink",
+    baseDifficulty: "easy",
+    slots: FOOD_ORDER,
+    build: (f) => ({
+      kana: `${f.kana}をください`,
+      romaji: `${f.romaji} o kudasai`,
+      meaning: `${f.meaning[0].toUpperCase() + f.meaning.slice(1)}, please.`,
+    }),
+  },
+  {
+    id: "this_please",
+    category: "food_drink",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "これをください",
+      romaji: "kore o kudasai",
+      meaning: "This, please.",
+    }),
+  },
+  {
+    id: "takeaway",
+    category: "food_drink",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "もちかえりです",
+      romaji: "mochikaeri desu",
+      meaning: "It’s takeaway.",
+    }),
+  },
+  {
+    id: "eat_here",
+    category: "food_drink",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "ここでたべます",
+      romaji: "koko de tabemasu",
+      meaning: "I’ll eat here.",
+    }),
+  },
+  {
+    id: "how_many",
+    category: "food_drink",
+    baseDifficulty: "standard",
+    slots: COUNTABLE_ORDER,
+    build: (c) => ({
+      kana: `${c.kana}ください`,
+      romaji: `${c.romaji} kudasai`,
+      meaning: `One / two / three, please.`,
+    }),
+  },
+  {
+    id: "allergy",
+    category: "food_drink",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "アレルギーがあります",
+      romaji: "arerugii ga arimasu",
+      meaning: "I have an allergy.",
+    }),
+  },
+  {
+    id: "no_meat",
+    category: "food_drink",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "にくはたべません",
+      romaji: "niku wa tabemasen",
+      meaning: "I don’t eat meat.",
+    }),
+  },
+
+  // --- Accommodation ---
+  {
+    id: "check_in",
+    category: "accommodation",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "チェックインをおねがいします",
+      romaji: "chekku in o onegaishimasu",
+      meaning: "Check-in, please.",
+    }),
+  },
+  {
+    id: "check_out_time",
+    category: "accommodation",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "チェックアウトはなんじですか",
+      romaji: "chekku auto wa nanji desu ka",
+      meaning: "What time is check-out?",
+    }),
+  },
+  {
+    id: "reservation_name",
+    category: "accommodation",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "よやくのなまえはこれです",
+      romaji: "yoyaku no namae wa kore desu",
+      meaning: "This is the name for the reservation.",
+    }),
+  },
+  {
+    id: "room_key",
+    category: "accommodation",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "かぎをなくしました",
+      romaji: "kagi o nakushimashita",
+      meaning: "I lost the key.",
+    }),
+  },
+  {
+    id: "wifi_password",
+    category: "accommodation",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "ワイファイのパスワードはなんですか",
+      romaji: "waifai no pasuwaado wa nan desu ka",
+      meaning: "What is the Wi-Fi password?",
+    }),
+  },
+
+  // --- Shopping ---
+  {
+    id: "how_much",
+    category: "shopping",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "いくらですか",
+      romaji: "ikura desu ka",
+      meaning: "How much is it?",
+    }),
+  },
+  {
+    id: "receipt",
+    category: "shopping",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "レシートをください",
+      romaji: "reshiito o kudasai",
+      meaning: "Receipt, please.",
+    }),
+  },
+  {
+    id: "show_me_this",
+    category: "shopping",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "これをみせてください",
+      romaji: "kore o misete kudasai",
+      meaning: "Please show me this.",
+    }),
+  },
+  {
+    id: "pay_method",
+    category: "shopping",
+    baseDifficulty: "standard",
+    slots: PAYMENT_METHODS,
+    build: (m) => ({
+      kana: `${m.kana}はつかえますか`,
+      romaji: `${m.romaji} wa tsukaemasu ka`,
+      meaning: `Can I use ${m.meaning}?`,
+    }),
+  },
+
+  // --- Social ---
+  {
+    id: "nice_to_meet",
+    category: "social",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "はじめまして",
+      romaji: "hajimemashite",
+      meaning: "Nice to meet you.",
+    }),
+  },
+  {
+    id: "please_be_kind",
+    category: "social",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "よろしくおねがいします",
+      romaji: "yoroshiku onegaishimasu",
+      meaning: "Please be kind to me.",
+    }),
+  },
+  {
+    id: "my_name_is",
+    category: "social",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "なまえはなんですか",
+      romaji: "namae wa nan desu ka",
+      meaning: "What is your name?",
+    }),
+  },
+  {
+    id: "photo_ok",
+    category: "social",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "しゃしんをとってもいいですか",
+      romaji: "shashin o totte mo ii desu ka",
+      meaning: "May I take a photo?",
+    }),
+  },
+
+  // --- Time & money ---
+  {
+    id: "now_ok",
+    category: "time_money",
+    baseDifficulty: "easy",
+    slots: TIMES,
+    build: (t) => ({
+      kana: `${t.kana}はだいじょうぶです`,
+      romaji: `${t.romaji} wa daijoubu desu`,
+      meaning: `${t.meaning[0].toUpperCase() + t.meaning.slice(1)} is okay.`,
+    }),
+  },
+  {
+    id: "i_am_ok",
+    category: "time_money",
+    baseDifficulty: "easy",
+    slots: [null],
+    build: () => ({
+      kana: "だいじょうぶです",
+      romaji: "daijoubu desu",
+      meaning: "It’s okay.",
+    }),
+  },
+  {
+    id: "where_exchange",
+    category: "time_money",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "おかねはどこでかえられますか",
+      romaji: "okane wa doko de kaeraremasu ka",
+      meaning: "Where can I exchange money?",
+    }),
+  },
+
+  // --- Emergencies ---
+  {
+    id: "help",
+    category: "emergencies",
+    baseDifficulty: "standard",
+    slots: [null],
+    build: () => ({
+      kana: "たすけてください",
+      romaji: "tasukete kudasai",
+      meaning: "Please help!",
+    }),
+  },
+  {
+    id: "lost_item",
+    category: "emergencies",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "なくしました",
+      romaji: "nakushimashita",
+      meaning: "I lost it.",
+    }),
+  },
+  {
+    id: "passport_lost",
+    category: "emergencies",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "パスポートをなくしました",
+      romaji: "pasupooto o nakushimashita",
+      meaning: "I lost my passport.",
+    }),
+  },
+  {
+    id: "feelings",
+    category: "emergencies",
+    baseDifficulty: "standard",
+    slots: BASIC_FEELINGS,
+    build: (f) => ({
+      kana: `${f.kana}`,
+      romaji: `${f.romaji}`,
+      meaning: `${f.meaning}`,
+    }),
+  },
+  {
+    id: "call_police",
+    category: "emergencies",
+    baseDifficulty: "spicy",
+    slots: [null],
+    build: () => ({
+      kana: "けいさつをよんでください",
+      romaji: "keisatsu o yonde kudasai",
+      meaning: "Please call the police.",
+    }),
+  },
+];
+
+// Controlled “micro-variants” for some frames (still whitelisted, still natural)
+function expandMicroVariants(frameId, slot){
+  // Return array of additional variant objects: { kana, romaji, meaning, addDiff? }
+  // Keep these conservative: no weird semantics.
+  if (frameId === "where_basic" && slot){
+    return [
+      {
+        kana: `${slot.kana}はどこですか`,
+        romaji: `${slot.romaji} wa doko desu ka`,
+        meaning: `Where is the ${slot.meaning}?`,
+      },
+      {
+        kana: `${slot.kana}はどこにありますか`,
+        romaji: `${slot.romaji} wa doko ni arimasu ka`,
+        meaning: `Where is the ${slot.meaning}?`,
+      },
+    ];
+  }
+
+  if (frameId === "where_polite" && slot){
+    return [
+      {
+        kana: `すみません、${slot.kana}はどこにありますか`,
+        romaji: `sumimasen ${slot.romaji} wa doko ni arimasu ka`,
+        meaning: `Excuse me, where is the ${slot.meaning}?`,
+      },
+    ];
+  }
+
+  if (frameId === "order_please" && slot){
+    return [
+      {
+        kana: `${slot.kana}をひとつください`,
+        romaji: `${slot.romaji} o hitotsu kudasai`,
+        meaning: `${slot.meaning[0].toUpperCase() + slot.meaning.slice(1)}, one please.`,
+        addDiff: "standard",
+      },
+    ];
+  }
+
+  if (frameId === "want_to_go_to" && slot){
+    return [
+      {
+        kana: `${slot.kana}までいきたいです`,
+        romaji: `${slot.romaji} made ikitai desu`,
+        meaning: `I want to go to the ${slot.meaning}.`,
+      },
+    ];
+  }
+
+  return [];
+}
 
 function buildSentenceRows240(){
   const rows = [];
 
-  // Slot banks (all kana-only, no kanji)
-  const PLACES = [
-    { kana:"えき", romaji:"eki", meaning:"station", diff:"easy" },
-    { kana:"ホテル", romaji:"hoteru", meaning:"hotel", diff:"easy" },
-    { kana:"トイレ", romaji:"toire", meaning:"toilet", diff:"easy" },
-    { kana:"コンビニ", romaji:"konbini", meaning:"convenience store", diff:"standard" },
-    { kana:"レストラン", romaji:"resutoran", meaning:"restaurant", diff:"standard" },
-    { kana:"くうこう", romaji:"kuukou", meaning:"airport", diff:"standard" },
-    { kana:"こうえん", romaji:"kouen", meaning:"park", diff:"standard" },
-    { kana:"びょういん", romaji:"byouin", meaning:"hospital", diff:"spicy" },
-  ];
+  // Light travel skew:
+  // - We include more frames in travel/transport/directions,
+  // - And we allow more variants per slot on travel frames via micro-variants.
 
-  const FOODS = [
-    { kana:"みず", romaji:"mizu", meaning:"water", diff:"easy" },
-    { kana:"おちゃ", romaji:"ocha", meaning:"tea", diff:"easy" },
-    { kana:"コーヒー", romaji:"koohii", meaning:"coffee", diff:"standard" },
-    { kana:"ごはん", romaji:"gohan", meaning:"meal/rice", diff:"easy" },
-    { kana:"らーめん", romaji:"raamen", meaning:"ramen", diff:"standard" },
-    { kana:"すし", romaji:"sushi", meaning:"sushi", diff:"standard" },
-    { kana:"アレルギー", romaji:"arerugii", meaning:"allergy", diff:"spicy" },
-  ];
+  // Deterministic expansion pass:
+  // For each frame, iterate its slots in order and emit:
+  // - base sentence
+  // - optional micro variants (frame-specific, safe)
+  for (const frame of SENT_FRAMES){
+    const slots = (frame.slots && frame.slots.length) ? frame.slots : [null];
 
-  const NUMS = [
-    { kana:"ひとつ", romaji:"hitotsu", meaning:"one (thing)", diff:"easy" },
-    { kana:"ふたつ", romaji:"futatsu", meaning:"two (things)", diff:"easy" },
-    { kana:"みっつ", romaji:"mittsu", meaning:"three (things)", diff:"standard" },
-  ];
+    for (const slot of slots){
+      const built = frame.build(slot);
+      const slotDiff = slot?.diff || "easy";
+      const diff = maxDiff(frame.baseDifficulty || "standard", slotDiff);
 
-  const TIMES = [
-    { kana:"いま", romaji:"ima", meaning:"now", diff:"easy" },
-    { kana:"きょう", romaji:"kyou", meaning:"today", diff:"standard" },
-    { kana:"あした", romaji:"ashita", meaning:"tomorrow", diff:"standard" },
-    { kana:"あとで", romaji:"atode", meaning:"later", diff:"easy" },
-  ];
+      rows.push({
+        kana: built.kana,
+        romaji: built.romaji,
+        meaning: built.meaning,
+        diff,
+        category: frame.category,
+      });
 
-  // Templates by category
-  const TEMPLATES = [
-    // travel & basics
-    { cat:"travel", diff:"easy",
-      mk: (p)=>({ kana:`${p.kana}はどこですか`, romaji:`${p.romaji} wa doko desu ka`, meaning:`Where is the ${p.meaning}?` })
-    },
-    { cat:"travel", diff:"standard",
-      mk: (p)=>({ kana:`すみません、${p.kana}はどこですか`, romaji:`sumimasen ${p.romaji} wa doko desu ka`, meaning:`Excuse me, where is the ${p.meaning}?` })
-    },
-    { cat:"travel", diff:"standard",
-      mk: (_)=>({ kana:`えいごはわかりますか`, romaji:`eigo wa wakarimasu ka`, meaning:`Do you understand English?` })
-    },
-
-    // food & drink
-    { cat:"food_drink", diff:"easy",
-      mk: (f)=>({ kana:`${f.kana}をください`, romaji:`${f.romaji} o kudasai`, meaning:`${f.meaning[0].toUpperCase()+f.meaning.slice(1)}, please.` })
-    },
-    { cat:"food_drink", diff:"standard",
-      mk: (f)=>({ kana:`これをください`, romaji:`kore o kudasai`, meaning:`This, please.` })
-    },
-    { cat:"food_drink", diff:"spicy",
-      mk: (f)=>({ kana:`${f.kana}があります`, romaji:`${f.romaji} ga arimasu`, meaning:`I have an ${f.meaning}.` })
-    },
-
-    // transport
-    { cat:"transport", diff:"standard",
-      mk: (p)=>({ kana:`${p.kana}までいきたいです`, romaji:`${p.romaji} made ikitai desu`, meaning:`I want to go to the ${p.meaning}.` })
-    },
-    { cat:"transport", diff:"spicy",
-      mk: (_)=>({ kana:`つぎのでんしゃはなんじですか`, romaji:`tsugi no densha wa nanji desu ka`, meaning:`What time is the next train?` })
-    },
-    { cat:"transport", diff:"standard",
-      mk: (_)=>({ kana:`きっぷをかいたいです`, romaji:`kippu o kaitai desu`, meaning:`I want to buy a ticket.` })
-    },
-
-    // directions
-    { cat:"directions", diff:"easy",
-      mk: (_)=>({ kana:`まっすぐいってください`, romaji:`massugu itte kudasai`, meaning:`Please go straight.` })
-    },
-    { cat:"directions", diff:"easy",
-      mk: (_)=>({ kana:`みぎにまがってください`, romaji:`migi ni magatte kudasai`, meaning:`Please turn right.` })
-    },
-    { cat:"directions", diff:"easy",
-      mk: (_)=>({ kana:`ひだりにまがってください`, romaji:`hidari ni magatte kudasai`, meaning:`Please turn left.` })
-    },
-
-    // accommodation
-    { cat:"accommodation", diff:"standard",
-      mk: (_)=>({ kana:`チェックインをおねがいします`, romaji:`chekku in o onegaishimasu`, meaning:`Check-in, please.` })
-    },
-    { cat:"accommodation", diff:"spicy",
-      mk: (_)=>({ kana:`チェックアウトはなんじですか`, romaji:`chekku auto wa nanji desu ka`, meaning:`What time is check-out?` })
-    },
-    { cat:"accommodation", diff:"spicy",
-      mk: (_)=>({ kana:`よやくをキャンセルしたいです`, romaji:`yoyaku o kyanseru shitai desu`, meaning:`I want to cancel my reservation.` })
-    },
-
-    // shopping
-    { cat:"shopping", diff:"easy",
-      mk: (_)=>({ kana:`いくらですか`, romaji:`ikura desu ka`, meaning:`How much is it?` })
-    },
-    { cat:"shopping", diff:"standard",
-      mk: (_)=>({ kana:`これをみせてください`, romaji:`kore o misete kudasai`, meaning:`Please show me this.` })
-    },
-    { cat:"shopping", diff:"standard",
-      mk: (_)=>({ kana:`レシートをください`, romaji:`reshiito o kudasai`, meaning:`Receipt, please.` })
-    },
-
-    // social
-    { cat:"social", diff:"easy",
-      mk: (_)=>({ kana:`はじめまして`, romaji:`hajimemashite`, meaning:`Nice to meet you.` })
-    },
-    { cat:"social", diff:"standard",
-      mk: (_)=>({ kana:`よろしくおねがいします`, romaji:`yoroshiku onegaishimasu`, meaning:`Please be kind to me.` })
-    },
-    { cat:"social", diff:"standard",
-      mk: (_)=>({ kana:`しゃしんをとってもいいですか`, romaji:`shashin o totte mo ii desu ka`, meaning:`May I take a photo?` })
-    },
-
-    // time & money
-    { cat:"time_money", diff:"easy",
-      mk: (t)=>({ kana:`${t.kana}はだいじょうぶです`, romaji:`${t.romaji} wa daijoubu desu`, meaning:`${t.meaning[0].toUpperCase()+t.meaning.slice(1)} is okay.` })
-    },
-    { cat:"time_money", diff:"standard",
-      mk: (_)=>({ kana:`げんきです`, romaji:`genki desu`, meaning:`I’m well.` })
-    },
-    { cat:"time_money", diff:"spicy",
-      mk: (_)=>({ kana:`クレジットカードはつかえますか`, romaji:`kurejitto kaado wa tsukaemasu ka`, meaning:`Can I use a credit card?` })
-    },
-
-    // emergencies
-    { cat:"emergencies", diff:"standard",
-      mk: (_)=>({ kana:`たすけてください`, romaji:`tasukete kudasai`, meaning:`Please help!` })
-    },
-    { cat:"emergencies", diff:"spicy",
-      mk: (_)=>({ kana:`びょういんにいきたいです`, romaji:`byouin ni ikitai desu`, meaning:`I want to go to a hospital.` })
-    },
-    { cat:"emergencies", diff:"spicy",
-      mk: (_)=>({ kana:`けいさつをよんでください`, romaji:`keisatsu o yonde kudasai`, meaning:`Please call the police.` })
-    },
-  ];
-
-  // Deterministic expansion:
-  // We walk categories evenly and fill templates with slot banks.
-  const cats = SENTENCE_CATEGORIES.map(c => c.id);
-  let safety = 0;
-
-  const slotForCat = (cat) => {
-    if (cat === "food_drink") return FOODS;
-    if (cat === "travel") return PLACES;
-    if (cat === "transport") return PLACES;
-    if (cat === "time_money") return TIMES;
-    return [null];
-  };
-
-  while (rows.length < 240 && safety < 50000){
-    safety++;
-
-    const cat = cats[rows.length % cats.length];
-    const templates = TEMPLATES.filter(t => t.cat === cat);
-
-    const t = templates[(rows.length / cats.length | 0) % templates.length];
-    const slots = slotForCat(cat);
-    const slot = slots[(rows.length * 7 + 3) % slots.length]; // deterministic
-
-    const built = t.mk(slot);
-
-    // Derive difficulty as max(template diff, slot diff if present)
-    const itemDiff = (() => {
-      const a = t.diff || "standard";
-      const b = slot?.diff || "easy";
-      return (DIFF_RANK[a] >= DIFF_RANK[b]) ? a : b;
-    })();
-
-    rows.push({
-      kana: built.kana,
-      romaji: built.romaji,
-      meaning: built.meaning,
-      diff: itemDiff,
-      category: cat
-    });
+      const extras = expandMicroVariants(frame.id, slot);
+      for (const ex of extras){
+        const exDiff = ex.addDiff ? maxDiff(diff, ex.addDiff) : diff;
+        rows.push({
+          kana: ex.kana,
+          romaji: ex.romaji,
+          meaning: ex.meaning,
+          diff: exDiff,
+          category: frame.category,
+        });
+      }
+    }
   }
 
-  // Make unique by kana and slice to exactly 240
-  const unique = uniqByKana(rows).slice(0, 240);
+  // Dedupe
+  const unique = uniqByKana(rows);
 
-  // If uniqueness ever trimmed us below 240 (unlikely), add simple numbered variants:
-  // (kept kana-only and still useful)
-  while (unique.length < 240){
-    const i = unique.length + 1;
-    unique.push({
-      kana: `これは${i}ばんです`,
-      romaji: `kore wa ${i} ban desu`,
-      meaning: `This is number ${i}.`,
-      diff: "standard",
-      category: "travel"
-    });
+  // We need EXACTLY 240. If we have more, slice deterministically but keep breadth:
+  // - round-robin by category for the first pass, then fill remaining.
+  const byCat = new Map();
+  for (const c of SENTENCE_CATEGORIES.map(x => x.id)) byCat.set(c, []);
+  for (const r of unique){
+    const cat = byCat.has(r.category) ? r.category : "travel";
+    byCat.get(cat).push(r);
   }
 
-  return unique;
+  const roundRobin = [];
+  let added = true;
+  while (added && roundRobin.length < 260){ // a bit beyond 240 for safety
+    added = false;
+    for (const c of SENTENCE_CATEGORIES.map(x => x.id)){
+      const arr = byCat.get(c) || [];
+      if (arr.length){
+        roundRobin.push(arr.shift());
+        added = true;
+      }
+      if (roundRobin.length >= 260) break;
+    }
+  }
+
+  // After round-robin, append any leftovers (still deterministic)
+  const leftovers = [];
+  for (const c of SENTENCE_CATEGORIES.map(x => x.id)){
+    leftovers.push(...(byCat.get(c) || []));
+  }
+  const ordered = roundRobin.concat(leftovers);
+
+  // If we’re short (unlikely), add a small set of fully curated filler sentences.
+  const fallback = [
+    { kana:"すみません", romaji:"sumimasen", meaning:"Excuse me.", diff:"easy", category:"travel" },
+    { kana:"おねがいします", romaji:"onegaishimasu", meaning:"Please.", diff:"easy", category:"travel" },
+    { kana:"だいじょうぶです", romaji:"daijoubu desu", meaning:"It’s okay.", diff:"easy", category:"time_money" },
+    { kana:"トイレにいきたいです", romaji:"toire ni ikitai desu", meaning:"I want to go to the toilet.", diff:"standard", category:"travel" },
+    { kana:"ちょっとまってください", romaji:"chotto matte kudasai", meaning:"Please wait a moment.", diff:"standard", category:"travel" },
+    { kana:"たすけてください", romaji:"tasukete kudasai", meaning:"Please help!", diff:"standard", category:"emergencies" },
+  ];
+
+  const out = [];
+  const seenKana = new Set();
+  for (const r of ordered){
+    if (out.length >= 240) break;
+    if (seenKana.has(r.kana)) continue;
+    seenKana.add(r.kana);
+    out.push(r);
+  }
+
+  let i = 0;
+  while (out.length < 240){
+    const f = fallback[i % fallback.length];
+    if (!seenKana.has(f.kana)){
+      out.push(f);
+      seenKana.add(f.kana);
+    }
+    i++;
+    if (i > 2000) break; // safety
+  }
+
+  // Final guarantee
+  return out.slice(0, 240);
 }
 
 const SENT_ROWS_240 = buildSentenceRows240();
@@ -542,7 +1054,6 @@ function buildItems(settings){
 
     for (const s of SENT_ITEMS){
       if (!withinDifficulty(s.difficulty || "standard", difficulty)) continue;
-
       if (!allowedCats.has(s.category || "travel")) continue;
 
       if (script === "hira" && /[ァ-ヶー]/.test(s.kana)) continue;

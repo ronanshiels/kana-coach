@@ -83,8 +83,22 @@
     <div class="stack">
 
       <!-- 1) Prompt container -->
-      <div class="card promptCard">
+      <div class="card promptCard cueCard">
         <div class="bigPrompt" id="prompt">—</div>
+
+        <div class="promptDivider" aria-hidden="true"></div>
+
+        <div class="promptFeedback" id="promptFeedback" aria-live="polite">
+          <div class="promptFeedbackTop">
+            <span class="promptFeedbackLabel" id="promptFeedbackLabel">—</span>
+            <span class="promptFeedbackChip" id="promptFeedbackChip" hidden></span>
+          </div>
+          <div class="promptFeedbackText" id="promptFeedbackText">
+            <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
+          </div>
+          <div class="promptFeedbackNote mini" id="promptFeedbackNote" hidden></div>
+        </div>
+
         <div class="promptMeta">
           <div id="typeMeta">—</div>
           <div id="indexMeta">—</div>
@@ -111,13 +125,7 @@
           </div>
         </div>
       </div>
-
-      <!-- 3) Answer / definition container -->
-      <div class="result" id="result">
-        <p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>
-      </div>
-
-    </div>
+</div>
 
     <div class="bottom">
       <div class="statCard">
@@ -147,7 +155,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.7</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9.1</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>

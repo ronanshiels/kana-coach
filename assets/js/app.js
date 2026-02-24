@@ -73,7 +73,12 @@ import { loadJson, saveJson } from "./storage.js";
   const els = {
     prompt: document.getElementById("prompt"),
     answer: document.getElementById("answer"),
-    result: document.getElementById("result"),
+    // Prompt doubles as feedback/definition
+    promptFeedback: document.getElementById("promptFeedback"),
+    promptFeedbackLabel: document.getElementById("promptFeedbackLabel"),
+    promptFeedbackChip: document.getElementById("promptFeedbackChip"),
+    promptFeedbackText: document.getElementById("promptFeedbackText"),
+    promptFeedbackNote: document.getElementById("promptFeedbackNote"),
     checkBtn: document.getElementById("checkBtn"),
     revealBtn: document.getElementById("revealBtn"),
     nextBtn: document.getElementById("nextBtn"),
@@ -84,6 +89,8 @@ import { loadJson, saveJson } from "./storage.js";
     streakValue: document.getElementById("streakValue"),
     accValue: document.getElementById("accValue"),
     troubleValue: document.getElementById("troubleValue"),
+    streakCard: document.getElementById("streakCard"),
+    accCard: document.getElementById("accCard"),
     troubleSub: document.getElementById("troubleSub"),
     troubleCard: document.getElementById("troubleCard"),
     modeTiny: document.getElementById("modeTiny"),
@@ -161,7 +168,25 @@ import { loadJson, saveJson } from "./storage.js";
     showSpaces: !!loadJson(LS_KEY_SHOW_SPACES, false),
 
     troubleSubTimeout: null,
+
+    // Multi-attempt flow state (when the first attempt on a card is wrong)
+    retry: {
+      active: false,
+      // Wrong kana units from the *first* wrong attempt (used to suppress streak credit on eventual success)
+      firstWrongUnits: new Set(),
+      // Number of wrong attempts made on this card (1..3)
+      wrongCount: 0,
+      // Units to highlight in the prompt on the second wrong attempt
+      highlightUnits: new Set(),
+    },
   };
+
+  function resetRetryState(){
+    state.retry.active = false;
+    state.retry.firstWrongUnits = new Set();
+    state.retry.wrongCount = 0;
+    state.retry.highlightUnits = new Set();
+  }
 
   function rememberRecentSentence(kana){
     if (!kana) return;
@@ -201,7 +226,9 @@ import { loadJson, saveJson } from "./storage.js";
     applyShowSpaces();
     // Refresh prompt display immediately
     if (state.current) {
-      els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type, getPrimaryExpected(state.current));
+      renderPrompt(state.current, (state.retry?.active && state.retry.highlightUnits && state.retry.highlightUnits.size)
+        ? { wrongUnits: state.retry.highlightUnits }
+        : {});
     }
   }
 
@@ -296,6 +323,152 @@ import { loadJson, saveJson } from "./storage.js";
     }
 
     return out.replace(/\s+/g, GAP).trim();
+  }
+
+  function buildKanaDisplayTokens(kana, type, expectedRomaji){
+    const GAP = " ";
+    const raw = (kana || "");
+
+    // Never introduce gaps for single characters
+    if (!state.showSpaces || type === "char") {
+      return kanaToUnits(raw).map(u => ({ text: u, isUnit: true, unit: u }));
+    }
+
+    const expected = (expectedRomaji ?? "")
+      .toLowerCase()
+      .trim()
+      .replace(/[’']/g, "")
+      .replace(/\s+/g, " ");
+
+    const words = expected ? expected.split(" ").filter(Boolean) : [];
+    const units = kanaToUnits(raw);
+
+    // If the expected romaji has no word breaks, don't introduce any (prevents false splits)
+    if (words.length <= 1) {
+      const out = [];
+      for (const u of units){
+        out.push({ text: u, isUnit: true, unit: u });
+        if (u === "、" || u === "。" || u === "！" || u === "？") out.push({ text: GAP, isUnit: false });
+      }
+      return out;
+    }
+
+    const expectedNoSpace = words.join("");
+
+    // Build cumulative romaji-length after each kana unit (mirrors formatKanaForDisplay)
+    let rom = "";
+    const cumLens = [];
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i];
+      const v = KANA_MAP.get(u);
+
+      let contrib = "";
+      if (v) {
+        if (v === "(sokuon)") {
+          const next = units[i + 1];
+          const nextRomaji = next ? (KANA_MAP.get(next) || "") : "";
+          const c = leadingConsonant(nextRomaji);
+          contrib = c ? c : "";
+        } else if (v === "(long)") {
+          const prev = rom[rom.length - 1] || "";
+          contrib = ("aeiou".includes(prev)) ? prev : "";
+        } else {
+          contrib = v;
+        }
+        rom += contrib;
+      }
+      cumLens.push(rom.length);
+    }
+
+    // If we can't confidently align romaji-to-kana, fall back to punctuation-only spacing.
+    if (rom.length !== expectedNoSpace.length) {
+      const out = [];
+      for (const u of units){
+        out.push({ text: u, isUnit: true, unit: u });
+        if (u === "、" || u === "。" || u === "！" || u === "？") out.push({ text: GAP, isUnit: false });
+      }
+      return out;
+    }
+
+    // Boundary positions in the romaji string where we should insert gaps in the kana
+    const boundaries = new Set();
+    let pos = 0;
+    for (let w = 0; w < words.length - 1; w++) {
+      pos += words[w].length;
+      boundaries.add(pos);
+    }
+
+    // Build tokens: insert GAP after punctuation and after a kana unit that completes each romaji word.
+    const out = [];
+    for (let i = 0; i < units.length; i++) {
+      const u = units[i];
+      out.push({ text: u, isUnit: true, unit: u });
+
+      if (u === "、" || u === "。" || u === "！" || u === "？") out.push({ text: GAP, isUnit: false });
+      if (boundaries.has(cumLens[i])) out.push({ text: GAP, isUnit: false });
+    }
+
+    return out;
+  }
+  // Render the big kana prompt.
+  // options:
+  // - wrongUnits (Set)   -> show those kana in red
+  // - greenAll (true)    -> show all kana in green
+  // - almostUnits (Set)  -> show these kana in yellow; everything else green (used for Almost)
+  // - allRed (true)      -> show all kana in red (final incorrect)
+  function renderPrompt(item, options={}){
+    if (!item) return;
+    const primary = getPrimaryExpected(item);
+
+    const wrong = options?.wrongUnits instanceof Set ? options.wrongUnits : null;
+    const almost = options?.almostUnits instanceof Set ? options.almostUnits : null;
+    const greenAll = !!options?.greenAll;
+    const allRed = !!options?.allRed;
+
+    // Fast path: plain text (no highlights)
+    if (!wrong && !almost && !greenAll && !allRed){
+      els.prompt.textContent = formatKanaForDisplay(item.kana, item.type, primary);
+      return;
+    }
+
+    const tokens = buildKanaDisplayTokens(item.kana, item.type, primary);
+    els.prompt.innerHTML = tokens.map(t => {
+      if (!t.isUnit) return escapeHtml(t.text);
+
+      if (allRed){
+        return `<span class="promptWrong">${escapeHtml(t.text)}</span>`;
+      }
+
+      if (wrong && wrong.size && wrong.has(t.unit)){
+        return `<span class="promptWrong">${escapeHtml(t.text)}</span>`;
+      }
+
+      if (greenAll){
+        return `<span class="promptCorrect">${escapeHtml(t.text)}</span>`;
+      }
+
+      if (almost){
+        // Almost state: highlight specific kana in yellow; everything else green.
+        if (almost.size && almost.has(t.unit)){
+          return `<span class="promptAlmost">${escapeHtml(t.text)}</span>`;
+        }
+        return `<span class="promptCorrect">${escapeHtml(t.text)}</span>`;
+      }
+
+      return escapeHtml(t.text);
+    }).join("");
+  }
+
+  function setRetryVisuals(on){
+    if (!els.answer) return;
+    els.answer.classList.toggle("retryActive", !!on);
+    if (on){
+      els.answer.classList.remove("retryWiggle");
+      void els.answer.offsetWidth;
+      els.answer.classList.add("retryWiggle");
+      setTimeout(() => els.answer.classList.remove("retryWiggle"), 320);
+    }
+    if (els.checkBtn) els.checkBtn.textContent = on ? "Retry" : "Check";
   }
 
   function getSelectedSentenceCategories(){
@@ -407,13 +580,41 @@ import { loadJson, saveJson } from "./storage.js";
     const { correct, almost, seen, streak } = state.stats;
     const acc = seen ? Math.round(((correct + 0.5*almost)/seen)*100) : null;
 
+    const troubleCount = countTroubleKana();
+
+    const setDotTier = (el, tier) => {
+      if (!el) return;
+      el.classList.remove("dotRed","dotAmber","dotGreen","dotPlatinum");
+      if (tier === "red") el.classList.add("dotRed");
+      else if (tier === "amber") el.classList.add("dotAmber");
+      else if (tier === "green") el.classList.add("dotGreen");
+      else if (tier === "platinum") el.classList.add("dotPlatinum");
+    };
+
     els.streakValue.textContent = String(streak);
     els.accValue.textContent = acc === null ? "—" : `${acc}%`;
     els.seenTiny.textContent = `${seen} attempts`;
-    els.troubleValue.textContent = String(countTroubleKana());
+    els.troubleValue.textContent = String(troubleCount);
 
     const modeLabel = state.mode === "normal" ? "Normal" : (state.mode === "trouble" ? "Trouble kana" : "Recent kana");
     els.modeTiny.textContent = `Mode: ${modeLabel}`;
+
+    // Dot tiers
+    // Streak: 0–1 red, 2–4 amber, 5–8 green, 9+ platinum
+    const streakTier = (streak >= 9) ? "platinum" : (streak >= 5) ? "green" : (streak >= 2) ? "amber" : "red";
+    setDotTier(els.streakCard, streakTier);
+
+    // Accuracy: <60 red, 60–84 amber, 85–97 green, 98+ platinum
+    // Warm-up: keep amber until we have a few attempts (avoids instant 100% green on 1/1)
+    let accTier = "amber";
+    if (seen >= 5 && acc !== null){
+      accTier = (acc >= 98) ? "platinum" : (acc >= 85) ? "green" : (acc >= 60) ? "amber" : "red";
+    }
+    setDotTier(els.accCard, accTier);
+
+    // Trouble: 0 platinum, 1–2 green, 3–6 amber, 7+ red
+    const troubleTier = (troubleCount === 0) ? "platinum" : (troubleCount <= 2) ? "green" : (troubleCount <= 6) ? "amber" : "red";
+    setDotTier(els.troubleCard, troubleTier);
   }
 
   function buildPool(){
@@ -488,6 +689,8 @@ import { loadJson, saveJson } from "./storage.js";
 
   function nextItem(isFirst=false){
     state.checked = false;
+    resetRetryState();
+    setRetryVisuals(false);
 
     if (state.deck.length === 0){
       state.deck = shuffle(state.pool.length ? state.pool : buildItems(state.settings));
@@ -518,42 +721,64 @@ import { loadJson, saveJson } from "./storage.js";
     state.current = candidate || state.deck[Math.max(0, Math.min(state.idx - 1, state.deck.length - 1))];
 
     if (state.current?.type === "sentence") rememberRecentSentence(state.current.kana);
-    els.prompt.textContent = formatKanaForDisplay(state.current.kana, state.current.type, getPrimaryExpected(state.current));
+    renderPrompt(state.current, {});
     els.answer.value = "";
     els.answer.focus();
 
     els.typeMeta.textContent = `Type: ${state.current.type}`;
     els.indexMeta.textContent = `Card ${state.idx} / ${state.deck.length}`;
 
-    els.result.innerHTML = isFirst
-      ? `<p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>`
-      : `<p class="mini">New card. <b>Enter</b> to check.</p>`;
+    setInstructionFeedback(!!isFirst);
   }
 
-  function showResult({ status, title, meaning, romaji, noteHtml }){
-    const meaningText = meaning && meaning.trim()
-      ? meaning
-      : (state.current?.type === "char"
-        ? (state.current?.meaning || "Kana character")
-        : (state.current?.type === "word"
-          ? "Kana word"
-          : "Kana sentence"));
 
-    const def = `
-      <div class="defBox">
-        <p class="defLabel">Meaning</p>
-        <p class="defText">${escapeHtml(meaningText)}</p>
-      </div>`;
+  function setPromptFeedback({ mode="neutral", chip="", label="", html="", noteHtml="" }={}){
+    if (!els.promptFeedback) return;
 
-    const r = romaji ? `<p class="mini"><b>Romaji:</b> <span class="mono">${escapeHtml(romaji)}</span></p>` : "";
-    els.result.innerHTML = `
-      <p class="status ${status}">${title}</p>
-      ${def}
-      ${r}
-      ${noteHtml || ""}
-    `;
+    els.promptFeedback.classList.remove("system","meaning");
+    if (mode === "system") els.promptFeedback.classList.add("system");
+    else if (mode === "meaning") els.promptFeedback.classList.add("meaning");
+
+    if (els.promptFeedbackLabel) els.promptFeedbackLabel.textContent = label || (mode === "meaning" ? "Meaning" : "");
+
+    if (els.promptFeedbackChip){
+      const show = !!chip;
+      els.promptFeedbackChip.hidden = !show;
+      if (show) els.promptFeedbackChip.textContent = chip;
+    }
+
+    if (els.promptFeedbackText){
+      els.promptFeedbackText.innerHTML = html || "";
+    }
+
+    if (els.promptFeedbackNote){
+      const show = !!noteHtml;
+      els.promptFeedbackNote.hidden = !show;
+      if (show) els.promptFeedbackNote.innerHTML = noteHtml;
+    }
   }
 
+  function meaningTextForItem(item){
+    const meaning = (item?.meaning || "").trim();
+    if (meaning) return meaning;
+
+    if (item?.type === "char") return "Kana character";
+    if (item?.type === "word") return "Kana word";
+    if (item?.type === "sentence") return "Kana sentence";
+    return "Meaning";
+  }
+
+  function setInstructionFeedback(isFirst){
+    setPromptFeedback({
+      mode: "neutral",
+      chip: "",
+      label: "",
+      html: isFirst
+        ? '<p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>'
+        : '<p class="mini">New card. <b>Enter</b> to check.</p>',
+      noteHtml: ""
+    });
+  }
   function addRecentUnit(unit){
     state.recentUnits = state.recentUnits.filter(x => x !== unit);
     state.recentUnits.unshift(unit);
@@ -615,6 +840,56 @@ import { loadJson, saveJson } from "./storage.js";
     saveJson(LS_KEY_UNIT_STATS, state.unitStats);
   }
 
+  // When the first attempt was wrong, retries are practice-only.
+  // On retry success, we award streak credit only for units that were NOT wrong on the first attempt.
+  // We do not increment "seen" to avoid double-counting the same card.
+  function awardRetrySuccessStreak(item, userInput, excludeUnitsSet){
+    const { seen } = attributeUnits(item.kana, userInput);
+    for (const u of seen){
+      if (excludeUnitsSet && excludeUnitsSet.has(u)) continue;
+      const key = unitKey(u);
+      const st = ensureUnitStat(state.unitStats, key);
+      st.streak += 1;
+      st.last = Date.now();
+
+      if (st.streak >= 3 && troubleScoreUnit(st) > 0){
+        resetUnitToReleaseFromTrouble(st);
+        removeRecentUnit(u);
+      }
+    }
+    saveJson(LS_KEY_UNIT_STATS, state.unitStats);
+  }
+
+  function almostUnitsFor(item, result){
+    try{
+      const reason = (result?.reason || "").toString();
+      const units = kanaToUnits(item?.kana || "");
+      const out = new Set();
+
+      // Particle-specific Almost cases
+      if (reason.includes("topic particle") && reason.includes("“は”")){
+        for (const u of units) if (u === "は") out.add(u);
+      }
+      if (reason.includes("object particle") && reason.includes("“を”")){
+        for (const u of units) if (u === "を" || u === "ヲ") out.add(u);
+      }
+
+      // Standard spelling variants: highlight the kana whose standard romaji matches the referenced std.
+      const m = reason.match(/standard spelling is “([^”]+)”/);
+      if (m && m[1]){
+        const std = m[1].trim();
+        for (const u of units){
+          const v = KANA_MAP.get(u);
+          if (v && v === std) out.add(u);
+        }
+      }
+
+      return out;
+    } catch(_){
+      return new Set();
+    }
+  }
+
   function checkAnswer(){
     if (!state.current || state.checked) return;
 
@@ -627,96 +902,197 @@ import { loadJson, saveJson } from "./storage.js";
 
     const accepted = [primary, primary.replaceAll("wa","ha")];
 
-    // Trouble count before
-    const troubleBefore = getTroubleList();
-    const troubleBeforeKeys = new Set(troubleBefore.map(x => x.key));
-    const beforeCount = troubleBefore.length;
-
     const result = isCorrectDetailed(userRaw, accepted, state.settings, item.kana);
 
-    state.stats.seen += 1;
+    // Retry path: the first wrong attempt has already been counted; we allow up to 3 wrong attempts total.
+    if (state.retry.active){
+      if (result.verdict === "good" || result.verdict === "almost"){
+        // Award streak credit only for units that were NOT wrong on the first attempt
+        awardRetrySuccessStreak(item, userRaw, state.retry.firstWrongUnits);
 
-    const userNorm = stripSpaces(clean(userRaw));
-    const primaryNorm = stripSpaces(clean(primary));
+        if (result.verdict === "good"){
+          renderPrompt(item, { greenAll:true });
+          setRetryVisuals(false);
+          setPromptFeedback({
+            mode: "meaning",
+            chip: "Correct",
+            label: "Meaning",
+            html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+            noteHtml: ""
+          });
+        } else {
+          const almostUnits = almostUnitsFor(item, result);
+          renderPrompt(item, { almostUnits });
+          setRetryVisuals(false);
+          setPromptFeedback({
+            mode: "meaning",
+            chip: "Almost",
+            label: "Meaning",
+            html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+            noteHtml: `<span class="mini">Standard spelling: <span class="mono">${escapeHtml(primary)}</span></span>`
+          });
+        }
+
+        state.checked = true;
+        // End retry mode once resolved
+        resetRetryState();
+        updateStatsUI();
+        return;
+      }
+
+      // Wrong again: no further penalty. Escalate messaging / hints.
+      state.retry.wrongCount += 1;
+
+      if (state.retry.wrongCount >= 3){
+        // Final incorrect attempt
+        renderPrompt(item, { allRed:true });
+        setRetryVisuals(false);
+        setPromptFeedback({
+          mode: "system",
+          chip: "Answer",
+          label: "Romaji",
+          html: `<p class="defText mono">${escapeHtml(primary)}</p>`,
+          noteHtml: ""
+        });
+        state.checked = true;
+        resetRetryState();
+        updateStatsUI();
+        return;
+      }
+
+      // Second incorrect attempt: highlight wrong kana + "One last try"
+      if (state.retry.wrongCount >= 2){
+        const { wrong } = attributeUnits(item.kana, userRaw);
+        state.retry.highlightUnits = new Set(wrong);
+        renderPrompt(item, { wrongUnits: state.retry.highlightUnits });
+
+        setRetryVisuals(true);
+        setPromptFeedback({
+          mode: "system",
+          chip: "One last try",
+          label: "",
+          html: '<p class="mini"><b>One last try.</b></p><p class="mini">The incorrect kana are highlighted in <span class="promptWrong" style="font-weight:900;">red</span> above.</p>',
+          noteHtml: ''
+        });
+      } else {
+        // First retry after initial wrong: simple "Try again" with no hints
+        renderPrompt(item, {});
+        setRetryVisuals(true);
+        setPromptFeedback({
+          mode: "system",
+          chip: "Try again",
+          label: "",
+          html: '<p class="mini"><b>Try again.</b></p>',
+          noteHtml: ''
+        });
+      }
+
+      state.checked = false;
+      updateStatsUI();
+      return;
+    }
+
+    // First-attempt path
+
+    // Trouble count before (to drive the pulse animation)
+    const troubleBefore = getTroubleList();
+    const beforeCount = troubleBefore.length;
+
+    state.stats.seen += 1;
 
     if (result.verdict === "good"){
       state.stats.correct += 1;
       state.stats.streak += 1;
       updateUnitStatsFromAttempt(item, userRaw, "good");
 
-      showResult({
-        status: "good",
-        title: "Correct ✅",
-        meaning: item.meaning || "",
-        romaji: primary
+      renderPrompt(item, { greenAll:true });
+      setRetryVisuals(false);
+
+      setPromptFeedback({
+        mode: "meaning",
+        chip: "Correct",
+        label: "Meaning",
+        html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+        noteHtml: ""
       });
+
+      state.checked = true;
     } else if (result.verdict === "almost"){
       state.stats.almost += 1;
       state.stats.streak += 1;
       updateUnitStatsFromAttempt(item, userRaw, "almost");
 
-      const yourHtml = highlightUserDiffHtml(userRaw, primary);
-      const expHtml = highlightExpectedDiffHtml(userRaw, primary);
+      const almostUnits = almostUnitsFor(item, result);
+      renderPrompt(item, { almostUnits });
+      setRetryVisuals(false);
 
-      showResult({
-        status: "almost",
-        title: "Almost ✅",
-        meaning: item.meaning || "",
-        romaji: primary,
-        noteHtml: `
-          <p class="mini"><b>Your answer (normalized):</b> <span class="mono">${yourHtml || escapeHtml(userNorm || "—")}</span></p>
-          <p class="mini"><b>Expected:</b> <span class="mono">${expHtml || escapeHtml(primaryNorm)}</span></p>
-          <p class="mini">${escapeHtml(result.reason || describeDiff(userRaw, primary) || "Close variant.")}</p>
-        `
+      setPromptFeedback({
+        mode: "meaning",
+        chip: "Almost",
+        label: "Meaning",
+        html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+        noteHtml: `<span class="mini">Standard spelling: <span class="mono">${escapeHtml(primary)}</span></span>`
       });
+
+      state.checked = true;
     } else {
+      // First incorrect attempt: counts as wrong immediately, then allow up to 2 more tries.
       state.stats.wrong += 1;
       state.stats.streak = 0;
+
+      const { wrong } = attributeUnits(item.kana, userRaw);
+      state.retry.active = true;
+      state.retry.firstWrongUnits = new Set(wrong);
+      state.retry.wrongCount = 1;
+      state.retry.highlightUnits = new Set();
+
       updateUnitStatsFromAttempt(item, userRaw, "bad");
 
-      const yourHtml = highlightUserDiffHtml(userRaw, primary);
+      // No hint on the first incorrect attempt.
+      renderPrompt(item, {});
+      setRetryVisuals(true);
 
-      showResult({
-        status: "bad",
-        title: result.reason === "No answer entered." ? "No answer ❗" : "Incorrect ❌",
-        meaning: item.meaning || "",
-        romaji: primary,
-        noteHtml: `
-          <p class="mini"><b>Your answer (normalized):</b> <span class="mono">${yourHtml || escapeHtml(userNorm || "—")}</span></p>
-          <p class="mini">${escapeHtml(describeDiff(userRaw, primary) || "")}</p>
-        `
+      setPromptFeedback({
+        mode: "system",
+        chip: "Try again",
+        label: "",
+        html: '<p class="mini"><b>Try again.</b></p>',
+        noteHtml: ''
       });
+
+      state.checked = false;
     }
 
-    // Trouble count after + pulse
+    // Trouble count after + pulse (only meaningful on first attempt, since retries don't update trouble)
     const troubleAfter = getTroubleList();
     const afterCount = troubleAfter.length;
     const delta = afterCount - beforeCount;
+    if (delta !== 0) pulseTrouble(delta);
 
-    if (delta !== 0){
-      pulseTrouble(delta);
-    } else {
-      // Still provide a subtle “release” message when a unit hits 3 streak even if count unchanged due to script filter,
-      // but we keep it simple to avoid noise.
-    }
-
-    state.checked = true;
     updateStatsUI();
   }
-
   function reveal(){
     if (!state.current) return;
+
+    // Reveal ends any retry state
+    resetRetryState();
+    setRetryVisuals(false);
+
     const item = state.current;
     const primary = (item.accepted && item.accepted[0])
       ? item.accepted[0]
       : unitsToRomaji(kanaToUnits(item.kana));
 
-    showResult({
-      status: "almost",
-      title: "Revealed 👀",
-      meaning: item.meaning || "",
-      romaji: primary
+    // Keep the prompt un-highlighted on reveal, but show the romaji.
+    renderPrompt(item, {});
+    setPromptFeedback({
+      mode: "system",
+      chip: "Revealed",
+      label: "Romaji",
+      html: `<p class="defText mono">${escapeHtml(primary)}</p>`,
+      noteHtml: ""
     });
+
     state.checked = true;
   }
 
@@ -725,7 +1101,7 @@ import { loadJson, saveJson } from "./storage.js";
   function resetSession(){
     state.stats = { correct:0, wrong:0, almost:0, seen:0, streak:0 };
     updateStatsUI();
-    els.result.innerHTML = `<p class="mini">Session stats reset.</p>`;
+    setPromptFeedback({ mode:"neutral", chip:"", label:"", html:"<p class=\"mini\">Session stats reset.</p>" });
   }
 
   function resetHistory(){
@@ -766,6 +1142,45 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
+
+    {
+      version: "v0.9.1",
+      date: "2026-02-24",
+      items: [
+        "Gave the bottom metric cards meaning: the hanko dot now changes colour (red/amber/green/platinum) based on your Streak, Accuracy and Trouble levels.",
+        "Added a Platinum mastery tier for all three metrics.",
+        "Refined the cue-card look: removed the hole punch, added a stacked-paper effect, a subtle top accent stripe, and tightened/centered the feedback/meaning area to reduce height."
+      ]
+    },
+
+    {
+      version: "v0.9.0",
+      date: "2026-02-24",
+      items: [
+        "Redesigned the prompt into a cue-card style centrepiece.",
+        "Merged feedback + definition into the prompt card: definitions appear only on Correct/Almost.",
+        "Updated answer feedback states: Try again → One last try (with red highlights) → reveal romaji on final miss.",
+        "Added yellow Almost highlights for the kana that triggered the Almost verdict (with the rest shown in green).",
+        "Refined the bottom metric cards with a subtle hanko-style stamp aesthetic."
+      ]
+    },
+    {
+      version: "v0.8.9",
+      date: "2026-02-24",
+      items: [
+        "Made the retry flow more obvious: after a wrong first attempt, the result panel shows a clear ‘Try again’ callout and the input field is visually marked for retry.",
+        "Kept the red prompt highlighting for repeated wrong retries (shown from the second retry attempt onward).",
+        "When an answer is fully correct (either first try or after fixing it), the big prompt kana are highlighted in green.",
+      ]
+    },
+    {
+      version: "v0.8.8",
+      date: "2026-02-24",
+      items: [
+        "Added a retry practice flow: if your first romaji attempt is wrong it still counts as wrong (including Trouble attribution), but you stay on the same card to practise until you fix it.",
+        "No hints on the first retry. If you submit another wrong answer on the same card, the mistyped kana in the big prompt are highlighted in red.",
+      ]
+    },
     {
       version: "v0.8.7",
       date: "2026-02-24",

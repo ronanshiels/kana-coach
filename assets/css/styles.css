@@ -57,6 +57,9 @@
     --almost:#9a6b1a;
     --bad:#b42323;
 
+    /* Platinum tier (mastery) */
+    --platinum:#6d4aff;
+
     --focus: rgba(177,18,38,.18);
     --input:#ffffff;
     --overlay: rgba(0,0,0,.28);
@@ -207,12 +210,120 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 .promptCard{
   text-align:center;
-  padding-top: 18px;
-  padding-bottom: 14px;
+  padding-top: 16px;
+  padding-bottom: 12px;
+}
+
+
+/* Cue-card styling (prompt doubles as feedback/definition) */
+.promptCard.cueCard{
+  padding-top: 16px;
+  padding-bottom: 10px;
+  overflow: visible; /* allow the stacked-paper effect */
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--accent) 22%, transparent) 0 2px,
+      color-mix(in oklab, var(--paper) 92%, white) 2px,
+      var(--paper2)
+    );
+  border-color: color-mix(in oklab, var(--border) 85%, var(--accent) 15%);
+}
+
+/* Stacked paper: a faint “second card” behind */
+.promptCard.cueCard::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  transform: translate(4px, 4px);
+  border-radius: var(--radius);
+  border: 1px solid color-mix(in oklab, var(--border) 92%, var(--accent) 8%);
+  background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 88%, white), color-mix(in oklab, var(--paper2) 92%, var(--bg)));
+  box-shadow: 0 10px 22px var(--shadow);
+  pointer-events:none;
+  opacity:.55;
+  z-index: 0;
+}
+
+/* Bring content above the stacked layer */
+.promptCard.cueCard > *{ position:relative; z-index: 1; }
+
+.promptDivider{
+  height:1px;
+  margin: 6px 0 8px;
+  background: linear-gradient(90deg, transparent, var(--border), transparent);
+}
+
+.promptFeedback{
+  text-align:center;
+  padding: 8px 10px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--border) 88%, var(--accent) 12%);
+  background: color-mix(in oklab, var(--paper) 78%, transparent);
+}
+.promptFeedbackTop{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  margin-bottom:4px;
+}
+.promptFeedbackLabel{
+  font-size:12px;
+  letter-spacing:.2px;
+  font-weight: 900;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+
+.promptFeedbackChip{
+  font-size:12px;
+  font-weight: 950;
+  letter-spacing:.2px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in oklab, var(--bg) 50%, var(--card));
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.promptFeedbackText{
+  margin:0;
+  line-height: 1.25;
+}
+.promptFeedbackText .mini{ margin: 0; }
+
+/* System messages vs. meaning "prize" */
+.promptFeedback.system{
+  border-color: color-mix(in oklab, var(--bad) 35%, var(--border));
+  background: color-mix(in oklab, var(--bad) 8%, transparent);
+}
+.promptFeedback.system .promptFeedbackChip{
+  border-color: color-mix(in oklab, var(--bad) 35%, var(--border));
+  background: color-mix(in oklab, var(--bad) 10%, transparent);
+  color: color-mix(in oklab, var(--bad) 75%, var(--muted));
+}
+
+.promptFeedback.meaning{
+  border-color: color-mix(in oklab, var(--good) 28%, var(--border));
+  background: color-mix(in oklab, var(--good) 6%, transparent);
+}
+.promptFeedback.meaning .promptFeedbackChip{
+  border-color: color-mix(in oklab, var(--good) 28%, var(--border));
+  background: color-mix(in oklab, var(--good) 8%, transparent);
+  color: color-mix(in oklab, var(--good) 70%, var(--muted));
+}
+
+.promptFeedbackNote{
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed color-mix(in oklab, var(--border) 85%, transparent);
 }
 
 /* Default prompt font (rounded/system) */
 .bigPrompt{
+  position: relative;
   font-family: ui-rounded, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
   font-size: clamp(46px, 9vw, 76px);
   line-height:1.05;
@@ -222,8 +333,59 @@ button:disabled{opacity:.5;cursor:not-allowed}
   text-shadow: 0 6px 18px color-mix(in oklab, var(--accent) 8%, transparent); /* reduced */
 }
 
+/* Highlight kana in the big prompt after repeated wrong attempts */
+.bigPrompt .promptWrong{
+  color: var(--bad);
+  font-weight: 900;
+  text-shadow: none;
+}
+
+/* Highlight all kana in the big prompt when the answer is fully correct */
+.bigPrompt .promptCorrect{
+  color: var(--good);
+  font-weight: 900;
+  text-shadow: none;
+}
+
+/* Highlight kana that caused an Almost verdict */
+.bigPrompt .promptAlmost{
+  color: var(--almost);
+  font-weight: 950;
+  text-shadow: none;
+}
+
+/* Make “retry” state more obvious */
+.retryCallout{
+  margin: 10px 0 6px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid color-mix(in oklab, var(--bad) 55%, var(--border));
+  background: color-mix(in oklab, var(--bad) 12%, transparent);
+  font-weight: 950;
+  letter-spacing: .2px;
+}
+
+@keyframes retryWiggle{
+  0%{ transform: translateX(0); }
+  20%{ transform: translateX(-3px); }
+  40%{ transform: translateX(3px); }
+  60%{ transform: translateX(-2px); }
+  80%{ transform: translateX(2px); }
+  100%{ transform: translateX(0); }
+}
+
+.answerInput.retryActive{
+  border-color: color-mix(in oklab, var(--bad) 60%, var(--border));
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--bad) 18%, transparent);
+}
+
+.answerInput.retryWiggle{
+  animation: retryWiggle .28s ease;
+}
+
 /* Optional Mincho/serif prompt font */
 html.kanaSerif .bigPrompt{
+  position: relative;
   font-family:
     "Hiragino Mincho ProN",
     "Hiragino Mincho Pro",
@@ -239,6 +401,7 @@ html.kanaSerif .bigPrompt{
 
 /* Optional: emphasise word gaps when 'Show spaces' is enabled */
 html.showSpaces .bigPrompt{
+  position: relative;
   word-spacing: 0.3em;
 }
 
@@ -349,13 +512,53 @@ input[type="text"]:focus{
   gap:10px;
 }
 .statCard{
-  border:1px solid var(--border);
-  border-radius: var(--radius);
-  background: linear-gradient(180deg, var(--card), var(--paper2));
-  box-shadow: 0 8px 18px var(--shadow); /* reduced */
+  border: 1px solid color-mix(in oklab, var(--border) 90%, var(--accent) 10%);
+  border-radius: 16px;
+  background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 86%, white), var(--paper2));
+  box-shadow: 0 8px 18px var(--shadow), inset 0 1px 0 color-mix(in oklab, white 18%, transparent), inset 0 -10px 22px color-mix(in oklab, black 6%, transparent);
   padding: 12px 12px;
   min-height: 84px;
   min-width: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Tiny hanko stamp accent */
+.statCard::after{
+  content:"";
+  position:absolute;
+  right:10px;
+  top:10px;
+  width:10px;
+  height:10px;
+  border-radius: 2px;
+  background: color-mix(in oklab, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
+  opacity: .75;
+}
+
+/* Dot meaning tiers */
+.statCard.dotRed::after{
+  background: color-mix(in oklab, var(--bad) 58%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--bad) 40%, transparent);
+  opacity: .82;
+}
+.statCard.dotAmber::after{
+  background: color-mix(in oklab, var(--almost) 62%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--almost) 42%, transparent);
+  opacity: .82;
+}
+.statCard.dotGreen::after{
+  background: color-mix(in oklab, var(--good) 62%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--good) 42%, transparent);
+  opacity: .82;
+}
+.statCard.dotPlatinum::after{
+  background: color-mix(in oklab, var(--platinum) 68%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--platinum) 46%, transparent),
+    0 0 10px color-mix(in oklab, var(--platinum) 25%, transparent);
+  opacity: .9;
 }
 .statLabel{margin:0 0 2px;color:var(--muted);font-size:12px}
 .statValue{margin:0;font-size:26px;font-weight:950;letter-spacing:.2px;line-height:1.05}

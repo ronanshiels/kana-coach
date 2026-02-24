@@ -767,6 +767,16 @@ import { loadJson, saveJson } from "./storage.js";
 
   const CHANGELOG = [
     
+
+    {
+      version: "v0.8.6",
+      date: "2026-02-24",
+      items: [
+        "Moved the long SEO explainer off the homepage into a new About page to keep the main UI clean while preserving crawlable content.",
+        "Added an About (i) icon in the top bar linking to the new About page.",
+        "Kept a short, crawlable homepage teaser with a link to learn more."
+      ]
+    },
     {
       version: "v0.8.6",
       date: "2026-02-24",

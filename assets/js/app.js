@@ -768,6 +768,17 @@ import { loadJson, saveJson } from "./storage.js";
   const CHANGELOG = [
     
     {
+      version: "v0.8.6",
+      date: "2026-02-24",
+      items: [
+        "SEO improvements: upgraded page title + meta description, added canonical + robots meta tags, and added Open Graph/Twitter social metadata.",
+        "Added structured data (Schema.org EducationalApplication) and an on-page, crawlable description section so search engines can understand and rank Kana Coach.",
+        "Minor performance hint: preloaded the main stylesheet.",
+      ]
+    },
+    
+
+    {
       version: "v0.8.5",
       date: "2026-02-23",
       items: [

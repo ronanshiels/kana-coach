@@ -767,6 +767,13 @@ import { loadJson, saveJson } from "./storage.js";
 
   const CHANGELOG = [
     {
+      version: "v0.8.7",
+      date: "2026-02-24",
+      items: [
+        "Fixed sentence judging when users include punctuation (e.g., commas/full stops): punctuation is now treated as a separator during answer normalization, preventing false negatives and cascading diffs—especially with “Show spaces” enabled.",
+      ]
+    },
+    {
       version: "v0.8.6",
       date: "2026-02-24",
       items: [

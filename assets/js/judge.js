@@ -4,8 +4,13 @@ import { KANA_MAP, kanaToUnits, leadingConsonant } from "./kana-map.js";
 const clean = (s) => (s ?? "")
     .toLowerCase()
     .trim()
+    // Remove apostrophes often used in romaji (e.g., n')
     .replace(/[’']/g, "")
+    // Treat punctuation as word separators so user-typed commas/full stops don't break judging
+    .replace(/[.,!?;:，、。！？：；]/g, " ")
+    // Normalize common separators to spaces
     .replace(/[-_]/g, " ")
+    // Collapse whitespace
     .replace(/\s+/g, " ");
 const stripSpaces = (s) => s.replace(/\s+/g, "");
 const spacingMismatch = (userRaw, expectedRaw) => {

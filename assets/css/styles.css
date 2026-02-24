@@ -27,8 +27,8 @@
   --platinum:#d4af37;
   --platinumHi:#fff1bf;
   --platinumLo:#b38600;
-  --fieldAccent:#2f6fe6;
-  --fieldFocus: rgba(47,111,230,.20);
+  --fieldAccent:#5866b8;
+  --fieldFocus: rgba(88,102,184,.20);
 
   --focus: rgba(177,18,38,.22);
   --input:#12161c;
@@ -70,8 +70,8 @@
     --platinumLo:#b38600;
 
     /* Input focus accent (separate from vermilion so errors can own red) */
-    --fieldAccent:#2f6fe6;
-    --fieldFocus: rgba(47,111,230,.20);
+    --fieldAccent:#5866b8;
+    --fieldFocus: rgba(88,102,184,.20);
 
     --focus: rgba(177,18,38,.18);
     --input:#ffffff;
@@ -317,6 +317,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
   color: color-mix(in oklab, var(--good) 70%, var(--muted));
 }
 
+.promptFeedback.meaning.isAlmost .promptFeedbackChip{
+  border-color: color-mix(in oklab, var(--almost) 35%, var(--border));
+  background: color-mix(in oklab, var(--almost) 10%, transparent);
+  color: color-mix(in oklab, var(--almost) 75%, var(--muted));
+}
+
 .promptFeedbackNote{
   margin-top: 4px;
   padding-top: 0;
@@ -453,10 +459,10 @@ html.showSpaces .bigPrompt{
 /* Make the text entry section the focal point + center aligned */
 .answerCard{
   padding-top: 14px;
-  border-color: color-mix(in oklab, var(--accent) 55%, var(--border));
+  border-color: color-mix(in oklab, var(--fieldAccent) 55%, var(--border));
   box-shadow:
     0 12px 28px var(--shadow), /* reduced */
-    0 0 0 1px color-mix(in oklab, var(--accent) 8%, transparent); /* reduced */
+    0 0 0 1px color-mix(in oklab, var(--fieldAccent) 8%, transparent); /* reduced */
   text-align:center;
 }
 .answerCard::before{
@@ -465,7 +471,7 @@ html.showSpaces .bigPrompt{
   inset:0;
   background: linear-gradient(
     180deg,
-    var(--accentSoft),
+    color-mix(in oklab, var(--fieldAccent) 18%, transparent),
     transparent 60%
   );
   opacity:.45; /* reduced */
@@ -531,11 +537,12 @@ input[type="text"]:focus{
   position:absolute;
   right:10px;
   top:10px;
+  transform: rotate(-10deg);
   width:10px;
   height:10px;
-  border-radius: 999px;
+  border-radius: 3px;
   background: color-mix(in oklab, var(--muted) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--muted) 28%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--muted) 28%, transparent), inset 0 1px 0 rgba(255,255,255,.12);
   opacity: .9;
 }
 

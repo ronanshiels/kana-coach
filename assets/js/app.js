@@ -743,6 +743,9 @@ import { loadJson, saveJson } from "./storage.js";
     if (mode === "system") els.promptFeedback.classList.add("system");
     else if (mode === "meaning") els.promptFeedback.classList.add("meaning");
 
+    // Special-case styling for the Almost pill (amber rather than green)
+    els.promptFeedback.classList.toggle("isAlmost", mode === "meaning" && (chip || "").toLowerCase() === "almost");
+
     // Label is unused: the UI uses only the chip (pill) + content below.
     if (els.promptFeedbackLabel) els.promptFeedbackLabel.textContent = "";
 
@@ -1148,6 +1151,16 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
+
+    {
+      version: "v0.9.4",
+      date: "2026-02-24",
+      items: [
+        "Switched the romaji input focus accent to a subtle muted indigo (so red stays reserved for incorrect feedback).",
+        "Restored the hanko-style stamp dot shape on the metric cards and ensured it changes colour correctly for each tier.",
+        "Made the ‘Almost’ pill amber to match the kana highlight colour."
+      ]
+    },
 
     {
       version: "v0.9.2",

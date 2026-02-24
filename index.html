@@ -3,7 +3,43 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Kana Coach</title>
+  <title>Kana Coach – Learn Hiragana & Katakana with a Smart Japanese Reading Trainer</title>
+
+  <meta name="description" content="Kana Coach is a free Japanese reading trainer to help you master hiragana and katakana. Practice kana, words and short sentences with smart answer checking, trouble tracking and adaptive drills." />
+  <meta name="robots" content="index,follow" />
+  <link rel="canonical" href="https://kanacoach.com/" />
+
+  <!-- Open Graph / social -->
+  <meta property="og:title" content="Kana Coach – Master Hiragana &amp; Katakana" />
+  <meta property="og:description" content="A smart Japanese reading trainer with trouble tracking, adaptive kana drills, and lenient romaji checking." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://kanacoach.com/" />
+  <meta property="og:image" content="https://kanacoach.com/assets/icons/jp-flag-180.png" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Kana Coach – Japanese Kana Trainer" />
+  <meta name="twitter:description" content="Practice hiragana &amp; katakana with adaptive drills and smart romaji checking." />
+  <meta name="twitter:image" content="https://kanacoach.com/assets/icons/jp-flag-180.png" />
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "EducationalApplication",
+    "name": "Kana Coach",
+    "description": "A Japanese reading trainer for learning hiragana and katakana.",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "inLanguage": "en",
+    "url": "https://kanacoach.com/",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "GBP"
+    }
+  }
+  </script>
 
   <!-- Icons -->
   <link rel="icon" type="image/svg+xml" href="assets/icons/jp-flag.svg">
@@ -16,6 +52,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Kana Coach">
 
+  <link rel="preload" href="assets/css/styles.css" as="style">
   <link rel="stylesheet" href="assets/css/styles.css" />
 </head>
 
@@ -119,10 +156,45 @@
       <span class="pill" id="scriptPill">Script: —</span>
       <span class="pill" id="difficultyPill">Level: —</span>
     </div>
+
+    <!-- SEO / crawlable content (helps search engines understand the page) -->
+    <section class="card seoCard seoContent" aria-label="About Kana Coach">
+      <h1>Learn Hiragana and Katakana with Kana Coach</h1>
+      <p>
+        <b>Kana Coach</b> is a free Japanese reading trainer that helps you master <b>hiragana</b> and <b>katakana</b> through active recall.
+        Practise individual kana, kana-only words, and short kana-only sentences — with smart answer checking and adaptive drilling.
+      </p>
+
+      <div class="seoGrid">
+        <div class="seoBlock">
+          <h2>What is kana?</h2>
+          <p>
+            Kana refers to the two Japanese syllabaries: <b>hiragana</b> and <b>katakana</b>. These are the foundations of reading Japanese
+            and are used throughout everyday writing.
+          </p>
+        </div>
+
+        <div class="seoBlock">
+          <h2>How this trainer works</h2>
+          <ul>
+            <li>Read the kana prompt and type the romaji.</li>
+            <li>Optional lenient checking accepts common romanisation variants.</li>
+            <li>Tracks “trouble kana” you miss repeatedly across words and sentences.</li>
+            <li>Use Trouble mode to drill the characters you need most.</li>
+          </ul>
+        </div>
+      </div>
+
+      <h2>Who is it for?</h2>
+      <p>
+        Kana Coach is designed for beginners and returning learners who want a lightweight, focused way to improve kana reading speed and accuracy.
+      </p>
+    </section>
+
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.5</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.8.6</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>

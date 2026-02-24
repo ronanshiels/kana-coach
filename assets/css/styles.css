@@ -23,6 +23,13 @@
   --almost:#c08a2e;
   --bad:#d64545;
 
+  /* Platinum (mastery) + input focus accent */
+  --platinum:#d4af37;
+  --platinumHi:#fff1bf;
+  --platinumLo:#b38600;
+  --fieldAccent:#2f6fe6;
+  --fieldFocus: rgba(47,111,230,.20);
+
   --focus: rgba(177,18,38,.22);
   --input:#12161c;
   --overlay: rgba(0,0,0,.60);
@@ -58,7 +65,13 @@
     --bad:#b42323;
 
     /* Platinum tier (mastery) */
-    --platinum:#6d4aff;
+    --platinum:#d4af37;
+    --platinumHi:#fff1bf;
+    --platinumLo:#b38600;
+
+    /* Input focus accent (separate from vermilion so errors can own red) */
+    --fieldAccent:#2f6fe6;
+    --fieldFocus: rgba(47,111,230,.20);
 
     --focus: rgba(177,18,38,.18);
     --input:#ffffff;
@@ -220,13 +233,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
   padding-top: 16px;
   padding-bottom: 10px;
   overflow: visible; /* allow the stacked-paper effect */
-  background:
-    linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--accent) 22%, transparent) 0 2px,
-      color-mix(in oklab, var(--paper) 92%, white) 2px,
-      var(--paper2)
-    );
+  /* Removed top stripe; rely on paper tones + stacked layer for card feel */
+  background: linear-gradient(180deg, color-mix(in oklab, var(--paper) 92%, white), var(--paper2));
   border-color: color-mix(in oklab, var(--border) 85%, var(--accent) 15%);
 }
 
@@ -256,10 +264,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 .promptFeedback{
   text-align:center;
-  padding: 8px 10px;
-  border-radius: 14px;
-  border: 1px solid color-mix(in oklab, var(--border) 88%, var(--accent) 12%);
-  background: color-mix(in oklab, var(--paper) 78%, transparent);
+  /* No container box: separators in the card are enough */
+  padding: 2px 4px;
+  border-radius: 0;
+  border: none;
+  background: transparent;
 }
 .promptFeedbackTop{
   display:flex;
@@ -268,13 +277,8 @@ button:disabled{opacity:.5;cursor:not-allowed}
   gap:8px;
   margin-bottom:4px;
 }
-.promptFeedbackLabel{
-  font-size:12px;
-  letter-spacing:.2px;
-  font-weight: 900;
-  color: var(--muted);
-  text-transform: uppercase;
-}
+/* Label removed; rely on a single chip + content */
+.promptFeedbackLabel{ display:none; }
 
 .promptFeedbackChip{
   font-size:12px;
@@ -296,8 +300,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 /* System messages vs. meaning "prize" */
 .promptFeedback.system{
-  border-color: color-mix(in oklab, var(--bad) 35%, var(--border));
-  background: color-mix(in oklab, var(--bad) 8%, transparent);
+  /* no container styling */
 }
 .promptFeedback.system .promptFeedbackChip{
   border-color: color-mix(in oklab, var(--bad) 35%, var(--border));
@@ -306,8 +309,7 @@ button:disabled{opacity:.5;cursor:not-allowed}
 }
 
 .promptFeedback.meaning{
-  border-color: color-mix(in oklab, var(--good) 28%, var(--border));
-  background: color-mix(in oklab, var(--good) 6%, transparent);
+  /* no container styling */
 }
 .promptFeedback.meaning .promptFeedbackChip{
   border-color: color-mix(in oklab, var(--good) 28%, var(--border));
@@ -317,9 +319,12 @@ button:disabled{opacity:.5;cursor:not-allowed}
 
 .promptFeedbackNote{
   margin-top: 4px;
-  padding-top: 6px;
-  border-top: 1px dashed color-mix(in oklab, var(--border) 85%, transparent);
+  padding-top: 0;
+  border-top: none;
 }
+
+/* Placeholder meaning (e.g. “Hiragana character”) should read as non-definition */
+.promptMeaningPlaceholder{ font-style: italic; }
 
 /* Default prompt font (rounded/system) */
 .bigPrompt{
@@ -336,21 +341,18 @@ button:disabled{opacity:.5;cursor:not-allowed}
 /* Highlight kana in the big prompt after repeated wrong attempts */
 .bigPrompt .promptWrong{
   color: var(--bad);
-  font-weight: 900;
   text-shadow: none;
 }
 
 /* Highlight all kana in the big prompt when the answer is fully correct */
 .bigPrompt .promptCorrect{
   color: var(--good);
-  font-weight: 900;
   text-shadow: none;
 }
 
 /* Highlight kana that caused an Almost verdict */
 .bigPrompt .promptAlmost{
   color: var(--almost);
-  font-weight: 950;
   text-shadow: none;
 }
 
@@ -487,8 +489,8 @@ input[type="text"]{
   text-align:center;
 }
 input[type="text"]:focus{
-  border-color: color-mix(in oklab, var(--accent) 70%, var(--border));
-  box-shadow: 0 0 0 4px var(--focus);
+  border-color: color-mix(in oklab, var(--fieldAccent) 75%, var(--border));
+  box-shadow: 0 0 0 4px var(--fieldFocus);
 }
 
 .btns{
@@ -523,7 +525,7 @@ input[type="text"]:focus{
   overflow: hidden;
 }
 
-/* Tiny hanko stamp accent */
+/* Metric dot (hanko-style, but meaningful) */
 .statCard::after{
   content:"";
   position:absolute;
@@ -531,10 +533,35 @@ input[type="text"]:focus{
   top:10px;
   width:10px;
   height:10px;
-  border-radius: 2px;
-  background: color-mix(in oklab, var(--accent) 55%, transparent);
-  box-shadow: 0 0 0 1px color-mix(in oklab, var(--accent) 35%, transparent);
-  opacity: .75;
+  border-radius: 999px;
+  background: color-mix(in oklab, var(--muted) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--muted) 28%, transparent);
+  opacity: .9;
+}
+
+/* Dot tiers */
+.statCard.tier-red::after{
+  background: color-mix(in oklab, var(--bad) 88%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--bad) 40%, transparent);
+}
+.statCard.tier-amber::after{
+  background: color-mix(in oklab, var(--almost) 90%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--almost) 40%, transparent);
+}
+.statCard.tier-green::after{
+  background: color-mix(in oklab, var(--good) 90%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in oklab, var(--good) 38%, transparent);
+}
+.statCard.tier-platinum::after{
+  background: linear-gradient(135deg,
+    #fff2b3 0%,
+    #ffd36a 28%,
+    #ffefc7 55%,
+    #f3b94a 78%,
+    #fff4c9 100%);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, #b07a12 45%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.55);
 }
 
 /* Dot meaning tiers */
@@ -554,10 +581,17 @@ input[type="text"]:focus{
   opacity: .82;
 }
 .statCard.dotPlatinum::after{
-  background: color-mix(in oklab, var(--platinum) 68%, transparent);
+  background:
+    linear-gradient(135deg,
+      color-mix(in oklab, var(--platinumHi) 92%, white) 0%,
+      var(--platinum) 45%,
+      color-mix(in oklab, var(--platinumLo) 92%, black) 72%,
+      color-mix(in oklab, var(--platinumHi) 92%, white) 100%
+    );
   box-shadow:
-    0 0 0 1px color-mix(in oklab, var(--platinum) 46%, transparent),
-    0 0 10px color-mix(in oklab, var(--platinum) 25%, transparent);
+    0 0 0 1px color-mix(in oklab, var(--platinum) 48%, transparent),
+    0 0 12px color-mix(in oklab, var(--platinum) 22%, transparent),
+    inset 0 1px 0 rgba(255,255,255,.35);
   opacity: .9;
 }
 .statLabel{margin:0 0 2px;color:var(--muted);font-size:12px}

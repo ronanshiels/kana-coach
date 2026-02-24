@@ -87,10 +87,10 @@ import { loadJson, saveJson } from "./storage.js";
     indexMeta: document.getElementById("indexMeta"),
 
     streakValue: document.getElementById("streakValue"),
-    accValue: document.getElementById("accValue"),
-    troubleValue: document.getElementById("troubleValue"),
     streakCard: document.getElementById("streakCard"),
+    accValue: document.getElementById("accValue"),
     accCard: document.getElementById("accCard"),
+    troubleValue: document.getElementById("troubleValue"),
     troubleSub: document.getElementById("troubleSub"),
     troubleCard: document.getElementById("troubleCard"),
     modeTiny: document.getElementById("modeTiny"),
@@ -582,39 +582,43 @@ import { loadJson, saveJson } from "./storage.js";
 
     const troubleCount = countTroubleKana();
 
-    const setDotTier = (el, tier) => {
+    // Metric dot tiers (red / amber / green / platinum)
+    function setTier(el, tier){
       if (!el) return;
-      el.classList.remove("dotRed","dotAmber","dotGreen","dotPlatinum");
-      if (tier === "red") el.classList.add("dotRed");
-      else if (tier === "amber") el.classList.add("dotAmber");
-      else if (tier === "green") el.classList.add("dotGreen");
-      else if (tier === "platinum") el.classList.add("dotPlatinum");
-    };
+      el.classList.remove("tier-red","tier-amber","tier-green","tier-platinum");
+      if (tier) el.classList.add(tier);
+    }
+    function tierFromStreak(n){
+      if (n >= 9) return "tier-platinum";
+      if (n >= 5) return "tier-green";
+      if (n >= 2) return "tier-amber";
+      return "tier-red"; // 0–1
+    }
+    function tierFromAcc(a){
+      if (a === null) return "tier-amber";
+      if (a >= 98) return "tier-platinum";
+      if (a >= 85) return "tier-green";
+      if (a >= 60) return "tier-amber";
+      return "tier-red";
+    }
+    function tierFromTrouble(n){
+      if (n === 0) return "tier-platinum";
+      if (n <= 2) return "tier-green";
+      if (n <= 6) return "tier-amber";
+      return "tier-red";
+    }
 
     els.streakValue.textContent = String(streak);
     els.accValue.textContent = acc === null ? "—" : `${acc}%`;
     els.seenTiny.textContent = `${seen} attempts`;
     els.troubleValue.textContent = String(troubleCount);
 
+    setTier(els.streakCard, tierFromStreak(streak));
+    setTier(els.accCard, tierFromAcc(acc));
+    setTier(els.troubleCard, tierFromTrouble(troubleCount));
+
     const modeLabel = state.mode === "normal" ? "Normal" : (state.mode === "trouble" ? "Trouble kana" : "Recent kana");
     els.modeTiny.textContent = `Mode: ${modeLabel}`;
-
-    // Dot tiers
-    // Streak: 0–1 red, 2–4 amber, 5–8 green, 9+ platinum
-    const streakTier = (streak >= 9) ? "platinum" : (streak >= 5) ? "green" : (streak >= 2) ? "amber" : "red";
-    setDotTier(els.streakCard, streakTier);
-
-    // Accuracy: <60 red, 60–84 amber, 85–97 green, 98+ platinum
-    // Warm-up: keep amber until we have a few attempts (avoids instant 100% green on 1/1)
-    let accTier = "amber";
-    if (seen >= 5 && acc !== null){
-      accTier = (acc >= 98) ? "platinum" : (acc >= 85) ? "green" : (acc >= 60) ? "amber" : "red";
-    }
-    setDotTier(els.accCard, accTier);
-
-    // Trouble: 0 platinum, 1–2 green, 3–6 amber, 7+ red
-    const troubleTier = (troubleCount === 0) ? "platinum" : (troubleCount <= 2) ? "green" : (troubleCount <= 6) ? "amber" : "red";
-    setDotTier(els.troubleCard, troubleTier);
   }
 
   function buildPool(){
@@ -732,14 +736,15 @@ import { loadJson, saveJson } from "./storage.js";
   }
 
 
-  function setPromptFeedback({ mode="neutral", chip="", label="", html="", noteHtml="" }={}){
+  function setPromptFeedback({ mode="neutral", chip="", html="", noteHtml="" }={}){
     if (!els.promptFeedback) return;
 
     els.promptFeedback.classList.remove("system","meaning");
     if (mode === "system") els.promptFeedback.classList.add("system");
     else if (mode === "meaning") els.promptFeedback.classList.add("meaning");
 
-    if (els.promptFeedbackLabel) els.promptFeedbackLabel.textContent = label || (mode === "meaning" ? "Meaning" : "");
+    // Label is unused: the UI uses only the chip (pill) + content below.
+    if (els.promptFeedbackLabel) els.promptFeedbackLabel.textContent = "";
 
     if (els.promptFeedbackChip){
       const show = !!chip;
@@ -768,11 +773,21 @@ import { loadJson, saveJson } from "./storage.js";
     return "Meaning";
   }
 
+  function isPlaceholderMeaning(meaningText){
+    const t = (meaningText || "").trim().toLowerCase();
+    return t === "kana character" || t === "hiragana character" || t === "katakana character" || t.endsWith(" character");
+  }
+
+  function meaningHtmlForItem(item){
+    const m = meaningTextForItem(item);
+    const cls = isPlaceholderMeaning(m) ? "defText promptMeaningPlaceholder" : "defText";
+    return `<p class="${cls}">${escapeHtml(m)}</p>`;
+  }
+
   function setInstructionFeedback(isFirst){
     setPromptFeedback({
       mode: "neutral",
       chip: "",
-      label: "",
       html: isFirst
         ? '<p class="mini">Press <b>Enter</b> to check. Press <b>Enter</b> again for next.</p>'
         : '<p class="mini">New card. <b>Enter</b> to check.</p>',
@@ -916,8 +931,7 @@ import { loadJson, saveJson } from "./storage.js";
           setPromptFeedback({
             mode: "meaning",
             chip: "Correct",
-            label: "Meaning",
-            html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+            html: meaningHtmlForItem(item),
             noteHtml: ""
           });
         } else {
@@ -927,8 +941,7 @@ import { loadJson, saveJson } from "./storage.js";
           setPromptFeedback({
             mode: "meaning",
             chip: "Almost",
-            label: "Meaning",
-            html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+            html: meaningHtmlForItem(item),
             noteHtml: `<span class="mini">Standard spelling: <span class="mono">${escapeHtml(primary)}</span></span>`
           });
         }
@@ -949,8 +962,7 @@ import { loadJson, saveJson } from "./storage.js";
         setRetryVisuals(false);
         setPromptFeedback({
           mode: "system",
-          chip: "Answer",
-          label: "Romaji",
+          chip: "Romaji",
           html: `<p class="defText mono">${escapeHtml(primary)}</p>`,
           noteHtml: ""
         });
@@ -960,7 +972,7 @@ import { loadJson, saveJson } from "./storage.js";
         return;
       }
 
-      // Second incorrect attempt: highlight wrong kana + "One last try"
+      // Second incorrect attempt: highlight wrong kana + "One last time"
       if (state.retry.wrongCount >= 2){
         const { wrong } = attributeUnits(item.kana, userRaw);
         state.retry.highlightUnits = new Set(wrong);
@@ -969,9 +981,8 @@ import { loadJson, saveJson } from "./storage.js";
         setRetryVisuals(true);
         setPromptFeedback({
           mode: "system",
-          chip: "One last try",
-          label: "",
-          html: '<p class="mini"><b>One last try.</b></p><p class="mini">The incorrect kana are highlighted in <span class="promptWrong" style="font-weight:900;">red</span> above.</p>',
+          chip: "One last time",
+          html: '<p class="mini">The incorrect kana are highlighted in <span class="promptWrong" style="font-weight:900;">red</span> above.</p><p class="mini">Press <b>Enter</b> to retry.</p>',
           noteHtml: ''
         });
       } else {
@@ -981,8 +992,7 @@ import { loadJson, saveJson } from "./storage.js";
         setPromptFeedback({
           mode: "system",
           chip: "Try again",
-          label: "",
-          html: '<p class="mini"><b>Try again.</b></p>',
+          html: '<p class="mini">Press <b>Enter</b> to retry.</p>',
           noteHtml: ''
         });
       }
@@ -1011,8 +1021,7 @@ import { loadJson, saveJson } from "./storage.js";
       setPromptFeedback({
         mode: "meaning",
         chip: "Correct",
-        label: "Meaning",
-        html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+        html: meaningHtmlForItem(item),
         noteHtml: ""
       });
 
@@ -1029,8 +1038,7 @@ import { loadJson, saveJson } from "./storage.js";
       setPromptFeedback({
         mode: "meaning",
         chip: "Almost",
-        label: "Meaning",
-        html: `<p class="defText">${escapeHtml(meaningTextForItem(item))}</p>`,
+        html: meaningHtmlForItem(item),
         noteHtml: `<span class="mini">Standard spelling: <span class="mono">${escapeHtml(primary)}</span></span>`
       });
 
@@ -1055,8 +1063,7 @@ import { loadJson, saveJson } from "./storage.js";
       setPromptFeedback({
         mode: "system",
         chip: "Try again",
-        label: "",
-        html: '<p class="mini"><b>Try again.</b></p>',
+        html: '<p class="mini">Press <b>Enter</b> to retry.</p>',
         noteHtml: ''
       });
 
@@ -1087,8 +1094,7 @@ import { loadJson, saveJson } from "./storage.js";
     renderPrompt(item, {});
     setPromptFeedback({
       mode: "system",
-      chip: "Revealed",
-      label: "Romaji",
+      chip: "Romaji",
       html: `<p class="defText mono">${escapeHtml(primary)}</p>`,
       noteHtml: ""
     });
@@ -1101,7 +1107,7 @@ import { loadJson, saveJson } from "./storage.js";
   function resetSession(){
     state.stats = { correct:0, wrong:0, almost:0, seen:0, streak:0 };
     updateStatsUI();
-    setPromptFeedback({ mode:"neutral", chip:"", label:"", html:"<p class=\"mini\">Session stats reset.</p>" });
+    setPromptFeedback({ mode:"neutral", chip:"", html:"<p class=\"mini\">Session stats reset.</p>" });
   }
 
   function resetHistory(){
@@ -1142,6 +1148,19 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
+
+    {
+      version: "v0.9.2",
+      date: "2026-02-24",
+      items: [
+        "Simplified the prompt feedback area: removed the extra container box and correctness-tinted background so the kana highlighting stays the main signal.",
+        "Streamlined feedback text: removed duplicated words like ‘Meaning’, ‘Try again’, and ‘One last time’ from the body text and kept them as a single pill (Correct / Almost / Try again / One last time / Romaji).",
+        "Made placeholder meanings (e.g. ‘Kana character’) italic so they read as labels rather than definitions.",
+        "Removed the cue-card top stripe to reduce visual duplication.",
+        "Changed the input focus accent from vermilion to a calm blue so red is reserved for incorrect feedback.",
+        "Upgraded the Platinum dot to a gold/platinum gradient for a more premium mastery look."
+      ]
+    },
 
     {
       version: "v0.9.1",

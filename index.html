@@ -111,6 +111,7 @@
           <input
               type="text"
               id="answer"
+              class="answerInput"
               placeholder="Type romaji"
               autocomplete="off"
               autocorrect="off"
@@ -128,12 +129,12 @@
 </div>
 
     <div class="bottom">
-      <div class="statCard">
+      <div class="statCard" id="streakCard">
         <p class="statLabel">Streak</p>
         <p class="statValue" id="streakValue">0</p>
         <p class="statSub" id="modeTiny">Mode: Normal</p>
       </div>
-      <div class="statCard">
+      <div class="statCard" id="accCard">
         <p class="statLabel">Accuracy</p>
         <p class="statValue" id="accValue">—</p>
         <p class="statSub" id="seenTiny">0 attempts</p>
@@ -155,7 +156,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9.1</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9.3</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>

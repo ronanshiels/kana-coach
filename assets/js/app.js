@@ -1153,47 +1153,15 @@ import { loadJson, saveJson } from "./storage.js";
   const CHANGELOG = [
 
     {
-      version: "v0.9.4",
+      version: "v0.9",
       date: "2026-02-24",
       items: [
-        "Switched the romaji input focus accent to a subtle muted indigo (so red stays reserved for incorrect feedback).",
-        "Restored the hanko-style stamp dot shape on the metric cards and ensured it changes colour correctly for each tier.",
-        "Made the ‘Almost’ pill amber to match the kana highlight colour."
-      ]
-    },
-
-    {
-      version: "v0.9.2",
-      date: "2026-02-24",
-      items: [
-        "Simplified the prompt feedback area: removed the extra container box and correctness-tinted background so the kana highlighting stays the main signal.",
-        "Streamlined feedback text: removed duplicated words like ‘Meaning’, ‘Try again’, and ‘One last time’ from the body text and kept them as a single pill (Correct / Almost / Try again / One last time / Romaji).",
-        "Made placeholder meanings (e.g. ‘Kana character’) italic so they read as labels rather than definitions.",
-        "Removed the cue-card top stripe to reduce visual duplication.",
-        "Changed the input focus accent from vermilion to a calm blue so red is reserved for incorrect feedback.",
-        "Upgraded the Platinum dot to a gold/platinum gradient for a more premium mastery look."
-      ]
-    },
-
-    {
-      version: "v0.9.1",
-      date: "2026-02-24",
-      items: [
-        "Gave the bottom metric cards meaning: the hanko dot now changes colour (red/amber/green/platinum) based on your Streak, Accuracy and Trouble levels.",
-        "Added a Platinum mastery tier for all three metrics.",
-        "Refined the cue-card look: removed the hole punch, added a stacked-paper effect, a subtle top accent stripe, and tightened/centered the feedback/meaning area to reduce height."
-      ]
-    },
-
-    {
-      version: "v0.9.0",
-      date: "2026-02-24",
-      items: [
-        "Redesigned the prompt into a cue-card style centrepiece.",
-        "Merged feedback + definition into the prompt card: definitions appear only on Correct/Almost.",
-        "Updated answer feedback states: Try again → One last try (with red highlights) → reveal romaji on final miss.",
-        "Added yellow Almost highlights for the kana that triggered the Almost verdict (with the rest shown in green).",
-        "Refined the bottom metric cards with a subtle hanko-style stamp aesthetic."
+        "Cue-card prompt redesign: feedback + definition live in the main card, with definitions shown only on Correct/Almost.",
+        "Answer feedback flow updated: Try again → One last try (with red highlights) → auto-reveal romaji on the final miss.",
+        "Almost results now highlight only the kana that triggered the Almost verdict in amber, with the remaining kana shown in green.",
+        "Bottom metric cards upgraded: hanko-style dots now reflect performance tiers (red/amber/green/platinum) for Streak, Accuracy and Trouble.",
+        "Cleaner prompt area: removed extra boxes/stripes, streamlined feedback wording into a single status pill, and italicised placeholder meanings.",
+        "Input controls tightened to save vertical space: removed the Check button (Enter checks) and added an in-field return hint; Reveal sits left of the input and Next sits right."
       ]
     },
     {
@@ -1347,7 +1315,7 @@ import { loadJson, saveJson } from "./storage.js";
     openTroubleModal();
   }
 
-  els.checkBtn.addEventListener("click", checkAnswer);
+  if (els.checkBtn) els.checkBtn.addEventListener("click", checkAnswer);
   els.revealBtn.addEventListener("click", reveal);
   els.nextBtn.addEventListener("click", next);
 

@@ -482,6 +482,42 @@ html.showSpaces .bigPrompt{
   margin: 0 auto;
 }
 
+.answerRow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.answerField{
+  position:relative;
+  flex:1;
+  min-width: 0;
+}
+
+.answerField input[type="text"]{
+  padding-right: 44px; /* room for the return hint */
+}
+
+.enterHint{
+  position:absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 16px;
+  opacity: .55;
+  pointer-events:none;
+  user-select:none;
+}
+
+.answerRow > button{
+  min-height: 40px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+
 input[type="text"]{
   width:100%;
   border:1px solid var(--border);

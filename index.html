@@ -108,20 +108,24 @@
       <!-- 2) Input container -->
       <div class="card answerCard">
         <div class="answerInner">
-          <input
-              type="text"
-              id="answer"
-              class="answerInput"
-              placeholder="Type romaji"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="off"
-              spellcheck="false"
-              inputmode="latin"
-            >
-          <div class="btns">
-            <button class="primary" id="checkBtn">Check</button>
+          <div class="answerRow">
             <button class="ghost" id="revealBtn">Reveal</button>
+
+            <div class="answerField">
+              <input
+                  type="text"
+                  id="answer"
+                  class="answerInput"
+                  placeholder="Type romaji"
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                  inputmode="latin"
+                >
+              <span class="enterHint" aria-hidden="true">⏎</span>
+            </div>
+
             <button id="nextBtn">Next</button>
           </div>
         </div>
@@ -156,7 +160,7 @@
   </div>
 
   <!-- Version (bottom-right) — clickable to open changelog -->
-  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9.4</div>
+  <div class="versionTag" id="versionTag" role="button" tabindex="0" aria-label="Open changelog">v0.9</div>
 
   <!-- Drawer -->
   <div class="drawerOverlay" id="drawerOverlay"></div>

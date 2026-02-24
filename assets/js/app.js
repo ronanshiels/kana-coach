@@ -766,28 +766,13 @@ import { loadJson, saveJson } from "./storage.js";
      ----------------------------- */
 
   const CHANGELOG = [
-    
-
     {
       version: "v0.8.6",
       date: "2026-02-24",
       items: [
-        "Moved the long SEO explainer off the homepage into a new About page to keep the main UI clean while preserving crawlable content.",
-        "Added an About (i) icon in the top bar linking to the new About page.",
-        "Kept a short, crawlable homepage teaser with a link to learn more."
+        "Refined page metadata for sharing and discoverability (no visible UI changes).",
       ]
     },
-    {
-      version: "v0.8.6",
-      date: "2026-02-24",
-      items: [
-        "SEO improvements: upgraded page title + meta description, added canonical + robots meta tags, and added Open Graph/Twitter social metadata.",
-        "Added structured data (Schema.org EducationalApplication) and an on-page, crawlable description section so search engines can understand and rank Kana Coach.",
-        "Minor performance hint: preloaded the main stylesheet.",
-      ]
-    },
-    
-
     {
       version: "v0.8.5",
       date: "2026-02-23",
@@ -795,7 +780,6 @@ import { loadJson, saveJson } from "./storage.js";
         "Improved iOS Home Screen (standalone) display: enabled translucent status bar and ensured content respects the safe-area inset so the top bar never sits under the notch.",
       ]
     },
-    
     {
       version: "v0.8.4",
       date: "2026-02-23",
@@ -803,7 +787,7 @@ import { loadJson, saveJson } from "./storage.js";
         "Disabled OS-level autocorrect, autocapitalisation, autocomplete and spellcheck on the romaji input field to prevent unintended input changes on mobile.",
       ]
     },
-{
+    {
       version: "v0.8.3",
       date: "2026-02-23",
       items: [
